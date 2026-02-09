@@ -54,7 +54,8 @@ const html = `
   </head>
   <body>
     <section>
-      Microsoft Graph Subscription Sample will be here soon
+      Microsoft Graph Subscription Sample
+      will be here soon
     </section>
   </body>
 </html>
