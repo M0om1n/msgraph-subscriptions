@@ -36,7 +36,7 @@ const html = `
       html {
         font-family: neo-sans;
         font-weight: 700;
-        font-size: calc(62rem / 16);
+        font-size: calc(62rem / 24);
       }
       body {
         background: white;
@@ -54,10 +54,7 @@ const html = `
   </head>
   <body>
     <section>
-      Microsoft Graph Subscription Sample
-    </section>
-    <section>
-      will be here soon
+      Microsoft Graph Subscription Sample will be here soon
     </section>
   </body>
 </html>
