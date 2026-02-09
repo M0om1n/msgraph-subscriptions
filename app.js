@@ -55,6 +55,8 @@ const html = `
   <body>
     <section>
       Microsoft Graph Subscription Sample
+    </section>
+    <section>
       will be here soon
     </section>
   </body>
