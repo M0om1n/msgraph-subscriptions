@@ -1,16 +1,33 @@
 {
-  "name": "express-hello-world",
+  "name": "hello-msgraph-subscriptions",
   "version": "1.0.0",
-  "description": "Express Hello World on Render",
+  "description": "A simple Express.js application that demonstrates how to use Microsoft Graph API subscriptions.",
   "main": "app.js",
-  "repository": "https://github.com/render-examples/express-hello-world",
+  "repository": "https://github.com/M0om1n/msgraph-subscriptions",
   "author": "Render Developers",
   "license": "MIT",
   "private": false,
+  "type": "module",
   "scripts": {
     "start": "node app.js"
   },
   "dependencies": {
-    "express": "^5.0.0"
+    "@azure/msal-node": "^3.6.4",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "connect-flash": "^0.1.1",
+    "cookie-parser": "~1.4.7",
+    "debug": "^4.4.1",
+    "dotenv": "^17.2.1",
+    "express": "^5.0.0",
+    "express-session": "^1.19.0",
+    "http-errors": "^2.0.0",
+    "isomorphic-fetch": "^3.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.2.0",
+    "mocha": "^11.7.1",
+    "morgan": "^1.10.1",
+    "pem": "^1.14.8",
+    "pug": "^3.0.3",
+    "socket.io": "^4.8.1"
   }
 }

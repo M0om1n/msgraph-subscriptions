@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: express-hello-world
+    name: hello-msgraph-subscriptions
     runtime: node
     plan: free
     buildCommand: yarn install --frozen-lockfile

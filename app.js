@@ -1,4 +1,14 @@
 import express from "express";
+import createError from 'http-errors';
+import path from 'path';
+import cookieParser from 'cookie-parser';
+import logger from 'morgan';
+import session from 'express-session';
+import flash from 'connect-flash';
+import msal from '@azure/msal-node';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
