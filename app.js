@@ -1,6 +1,7 @@
 import express from "express";
 import createError from "http-errors";
 import path from "path";
+import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
 import flash from "connect-flash";
@@ -11,6 +12,9 @@ import dotenv from "dotenv";
 import indexRouter from "./routes/index.js";
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
