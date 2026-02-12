@@ -8,7 +8,7 @@ import session from "express-session";
 import * as msal from "@azure/msal-node";
 import dotenv from "dotenv";
 
-import indexRouter from "./routes/index";
+import indexRouter from "./routes/index.js";
 
 dotenv.config();
 
