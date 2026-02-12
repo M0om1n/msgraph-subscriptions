@@ -1,0 +1,34 @@
+extends layout
+
+block content
+  h1 Notifications
+  if userMode
+    p(class='fs-5 mb-3')= `Notifications should appear below when new messages are delivered to ${user.name}'s inbox.`
+  else
+    p(class='fs-5 mb-3')= `Notifications should appear below when new messages sent to any Teams channel in your organization.`
+  div(class='d-flex')
+    if userMode
+      div(class='fs-4 me-2')= user.name
+    button(class='btn btn-outline-secondary me-2'
+           type='button'
+           data-bs-toggle='collapse'
+           data-bs-target='#subscriptionDisplay') Show subscription
+    a(class='btn btn-outline-secondary' href=`${userMode ? 'delegated' : 'apponly'}/signout`) Delete subscription
+  div(class='collapse mt-3' id='subscriptionDisplay')
+    pre(class='wrapped-pre border bg-light p-2')
+      code=JSON.stringify(subscription, null, 2)
+  hr
+  table(class='table')
+    thead
+      tr
+        if userMode
+          th Subject
+          th ID
+        else
+          th Sender
+          th Message
+    tbody(id='notifications')
+
+  script= `const subscriptionId = '${subscription.id}';`
+  script(src='http://localhost:3001/socket.io/socket.io.js')
+  script(src='/javascript/watch-client.js')
