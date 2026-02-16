@@ -7,15 +7,14 @@ import * as io from "socket.io";
 
 const socketServer = http.createServer(express);
 
+const redirectUri = process.env.OAUTH_REDIRECT_URI || 'https://localhost:3000/delegated/callback';
+
 // Create a Socket.io server
 const ioServer = new io.Server(socketServer, {
   cors: {
     // Allow requests from the server only
     origin: [
-      process.env.OAUTH_REDIRECT_URI.substring(
-        0,
-        process.env.OAUTH_REDIRECT_URI.indexOf('/', 'https://'.length),
-      ),
+      redirectUri.substring(0, redirectUri.indexOf('/', 'https://'.length)),
     ],
     methods: ['GET', 'POST'],
   },
