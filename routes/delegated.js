@@ -5,7 +5,7 @@ import express from "express";
 const router = express.Router();
 
 import graph from "../helpers/graphHelper.js";
-//const dbHelper = require('../helpers/dbHelper');
+import dbHelper from "../helpers/dbHelper.js";
 
 // GET /delegated/signin
 router.get('/signin', async function (req, res) {
@@ -56,6 +56,8 @@ router.get('/callback', async function (req, res) {
     // If in production, use the current host to receive notifications
     const notificationHost = `${req.protocol}://${req.hostname}`;
 
+    //console.log(`notificationHost: ${notificationHost}`);
+
     // Create the subscription
     const subscription = await client.api('/subscriptions').create({
       changeType: 'created',
@@ -72,7 +74,7 @@ router.get('/callback', async function (req, res) {
     console.log(`Subscribed to user's inbox, subscription ID: ${subscription.id}`);
 
     // Add the subscription to the database
-    //await dbHelper.addSubscription(subscription.id, req.session.userAccountId);
+    dbHelper.addSubscription(subscription.id, req.session.userAccountId);
 
     // Redirect to subscription page
     res.redirect('/watch');
@@ -87,7 +89,7 @@ router.get('/signout', async function (req, res) {
   const subscriptionId = req.session.subscriptionId;
   const msalClient = req.app.locals.msalClient;
 
-  //await dbHelper.deleteSubscription(subscriptionId);
+  dbHelper.deleteSubscription(subscriptionId);
 
   const client = graph.getGraphClientForUser(
     msalClient,

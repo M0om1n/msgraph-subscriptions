@@ -6,42 +6,17 @@ const router = express.Router();
 
 import graph from "../helpers/graphHelper.js";
 import certHelper from "../helpers/certHelper.js";
-//const dbHelper = require('../helpers/dbHelper');
-
-//create sertificate if it doesn't exist (testing)
-/*
-router.get('/subscribe', async function (req, res) {
-  const client = graph.getGraphClientForApp(req.app.locals.msalClient);
-
-  // Ensure a certificate exists
-  await certHelper.createSelfSignedCertificateIfNotExists(
-    process.env.CERTIFICATE_PATH,
-    process.env.PRIVATE_KEY_PATH,
-    process.env.PRIVATE_KEY_PASSWORD,
-  );
-
-  res.redirect('/');
-});
-*/
+import dbHelper from "../helpers/dbHelper.js";
 
 // GET /apponly/subscribe
 router.get('/subscribe', async function (req, res) {
   const client = graph.getGraphClientForApp(req.app.locals.msalClient);
 
-  // Ensure a certificate exists
-  await certHelper.createSelfSignedCertificateIfNotExists(
-    process.env.CERTIFICATE_PATH,
-    process.env.PRIVATE_KEY_PATH,
-    process.env.PRIVATE_KEY_PASSWORD,
-  );
-
   // In production, use the current host to receive notifications
   const notificationHost = `${req.protocol}://${req.hostname}`;
 
   try {
-    /*    
-    const existingSubscriptions =
-      await dbHelper.getSubscriptionsByUserAccountId('APP-ONLY');
+    const existingSubscriptions = dbHelper.getSubscriptionsByUserAccountId('APP-ONLY');
 
     // Apps are only allowed one subscription to the /teams/getAllMessages resource
     // If we already had one, delete it so we can create a new one
@@ -55,10 +30,9 @@ router.get('/subscribe', async function (req, res) {
           console.error(err);
         }
 
-        await dbHelper.deleteSubscription(existingSub.subscriptionId);
+        dbHelper.deleteSubscription(existingSub.subscriptionId);
       }
     }
-    */  
 
     // Create the subscription
     const subscription = await client.api('/subscriptions').create({
@@ -85,7 +59,7 @@ router.get('/subscribe', async function (req, res) {
     );
 
     // Add subscription to the database
-    await dbHelper.addSubscription(subscription.id, 'APP-ONLY');
+    dbHelper.addSubscription(subscription.id, 'APP-ONLY');
 
     // Redirect to subscription page
     res.redirect('/watch');
@@ -105,7 +79,7 @@ router.get('/signout', async function (req, res) {
   const subscriptionId = req.session.subscriptionId;
   const msalClient = req.app.locals.msalClient;
 
-  //await dbHelper.deleteSubscription(subscriptionId);
+  dbHelper.deleteSubscription(subscriptionId);
 
   const client = graph.getGraphClientForApp(msalClient);
 

@@ -8,6 +8,9 @@ import graph from "../helpers/graphHelper.js";
 
 // GET /watch
 router.get('/', async function (req, res) {
+
+  console.log('Rendering watch page');
+
   const userAccountId = req.session.userAccountId;
   const subscriptionId = req.session.subscriptionId;
   const user = req.session.user;

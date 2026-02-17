@@ -6,9 +6,9 @@ const router = express.Router();
 
 import graph from "../helpers/graphHelper.js";
 import ioServer from "../helpers/socketHelper.js";
-import tokenHelper from "../helpers/tokenHelper.js";
 import certHelper from "../helpers/certHelper.js";
-//const dbHelper = require('../helpers/dbHelper');
+import tokenHelper from "../helpers/tokenHelper.js";
+import dbHelper from "../helpers/dbHelper.js";
 
 // POST /listen
 router.post('/', async function (req, res) {
@@ -48,14 +48,12 @@ router.post('/', async function (req, res) {
       // Verify the client state matches the expected value
       if (notification.clientState == process.env.SUBSCRIPTION_CLIENT_STATE) {
         // Verify we have a matching subscription record in the database
-        /*
-        const subscription = await dbHelper.getSubscription(
-          notification.subscriptionId,
+        const subscription = dbHelper.getSubscription(
+          notification.subscriptionId
         );
-        */
-        //For test purposes, we will assume the subscription is valid
-        const subscription = notification.subscriptionId;
         if (subscription) {
+          console.log(`Received notification for subscription ${notification.subscriptionId}`);
+
           // If notification has encrypted content, process that
           if (notification.encryptedContent) {
             processEncryptedNotification(notification);
@@ -73,6 +71,7 @@ router.post('/', async function (req, res) {
 
   res.status(202).end();
 });
+
 /**
  * Processes an encrypted notification
  * @param  {object} notification - The notification containing encrypted content
@@ -105,6 +104,7 @@ function processEncryptedNotification(notification) {
     });
   }
 }
+
 /**
  * Process a non-encrypted notification
  * @param  {object} notification - The notification to process
@@ -134,6 +134,7 @@ async function processNotification(notification, msalClient, userAccountId) {
     console.error(err);
   }
 }
+
 /**
  * Sends a notification to a Socket.io room
  * @param  {string} subscriptionId - The subscription ID used to send to the correct room

@@ -10,11 +10,11 @@ import * as msal from "@azure/msal-node";
 import dotenv from "dotenv";
 
 import indexRouter from "./routes/index.js";
+import lifecycleRouter from "./routes/lifecycle.js";
 import delegatedRouter from "./routes/delegated.js";
 import appOnlyRouter from "./routes/apponly.js";
-//import listenRouter from "./routes/listen.js";
-//import watchRouter from "./routes/watch.js";
-//import lifecycleRouter from "./routes/lifecycle.js";
+import listenRouter from "./routes/listen.js";
+import watchRouter from "./routes/watch.js";
 
 dotenv.config();
 
@@ -82,9 +82,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/delegated', delegatedRouter);
 app.use('/apponly', appOnlyRouter);
-//app.use('/listen', listenRouter);
-//app.use('/watch', watchRouter);
-//app.use('/lifecycle', lifecycleRouter);
+app.use('/listen', listenRouter);
+app.use('/watch', watchRouter);
+app.use('/lifecycle', lifecycleRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

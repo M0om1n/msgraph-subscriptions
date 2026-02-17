@@ -27,8 +27,8 @@ ioServer.on('connection', (socket) => {
   });
 });
 
-// Listen on port 3001
-socketServer.listen(3001);
-console.log('Socket.io listening on port 3001');
+// Listen on port 3002
+socketServer.listen(3002);
+console.log('Socket.io listening on port 3002');
 
 export default ioServer;

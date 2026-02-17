@@ -5,7 +5,7 @@ import express from "express";
 const router = express.Router();
 
 import graph from "../helpers/graphHelper.js";
-//const dbHelper = require('../helpers/dbHelper');
+import dbHelper from "../helpers/dbHelper.js";
 
 // POST /lifecycle
 router.post('/', async function (req, res) {
@@ -34,14 +34,10 @@ router.post('/', async function (req, res) {
       notification.lifecycleEvent === 'reauthorizationRequired'
     ) {
       // Verify we have a matching subscription record in the database
-      /*
-      const subscription = await dbHelper.getSubscription(
-        notification.subscriptionId,
+      const subscription = dbHelper.getSubscription(
+        notification.subscriptionId
       );
-      */
-      //For test purposes, we will assume the subscription is valid
-      const subscription = notification.subscriptionId;
-      
+
       if (subscription) {
         // Renew the subscription
         await renewSubscription(subscription, req.app.locals.msalClient);
