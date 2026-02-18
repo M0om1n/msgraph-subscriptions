@@ -13,7 +13,7 @@ router.get('/subscribe', async function (req, res) {
   const client = graph.getGraphClientForApp(req.app.locals.msalClient);
 
   // In production, use the current host to receive notifications
-  const notificationHost = `${req.protocol}://${req.hostname}`;
+  const notificationHost = `https://${req.hostname}`;
 
   try {
     const existingSubscriptions = dbHelper.getSubscriptionsByUserAccountId('APP-ONLY');

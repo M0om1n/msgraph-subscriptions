@@ -54,7 +54,7 @@ router.get('/callback', async function (req, res) {
     console.log(`Logged in as ${user.displayName}`);
 
     // If in production, use the current host to receive notifications
-    const notificationHost = `${req.protocol}://${req.hostname}`;
+    const notificationHost = `https://${req.hostname}`;
 
     //console.log(`notificationHost: ${notificationHost}`);
 
