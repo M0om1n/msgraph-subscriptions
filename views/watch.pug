@@ -16,7 +16,7 @@ block content
     a(class='btn btn-outline-secondary' href=`${userMode ? 'delegated' : 'apponly'}/signout`) Delete subscription
   div(class='collapse mt-3' id='subscriptionDisplay')
     pre(class='wrapped-pre border bg-light p-2')
-      code=JSON.stringify(subscription ?? {}, null, 2)
+      code=subscription ? JSON.stringify(subscription, null, 2) : ''
   hr
   table(class='table')
     thead
