@@ -29,16 +29,20 @@ router.post('/', async function (req, res) {
 
   // Check for validation tokens, validate them if present
   let areTokensValid = true;
-  if (req.body.validationTokens) {
-    const appId = process.env.OAUTH_CLIENT_ID;
-    const tenantId = process.env.OAUTH_TENANT_ID;
-    const validationResults = await Promise.all(
-      req.body.validationTokens.map((token) =>
-        tokenHelper.isTokenValid(token, appId, tenantId),
-      ),
-    );
-
-    areTokensValid = validationResults.reduce((x, y) => x && y);
+  try {
+    if (req.body.validationTokens) {
+      const appId = process.env.OAUTH_CLIENT_ID;
+      const tenantId = process.env.OAUTH_TENANT_ID;
+      const validationResults = await Promise.all(
+        req.body.validationTokens.map((token) =>
+          tokenHelper.isTokenValid(token, appId, tenantId),
+        ),
+      );
+      areTokensValid = validationResults.reduce((x, y) => x && y);
+    } 
+  } catch (error) {
+    console.error('Error validating tokens:', error);
+    areTokensValid = false;
   }
 
   console.log('areTokensValid:', areTokensValid);
@@ -59,13 +63,16 @@ router.post('/', async function (req, res) {
           // If notification has encrypted content, process that
           if (notification.encryptedContent) {
             processEncryptedNotification(notification);
-          } else {
+          } 
+          /*
+          else {
             await processNotification(
               notification,
               req.app.locals.msalClient,
               subscription.userAccountId,
             );
           }
+          */  
         }
       }
     }
