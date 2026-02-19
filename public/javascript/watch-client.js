@@ -1,9 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-//const redirectUri = process.env.OAUTH_REDIRECT_URI;
-//const serverUrl = redirectUri.substring(0, redirectUri.indexOf('/', 'https://'.length))+':3002';
-
 // Connect to the Socket.io server
 const socket = io();
 
