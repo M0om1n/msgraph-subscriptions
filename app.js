@@ -1,6 +1,6 @@
 import express from "express";
 import { createServer } from "http";
-import WebSocket from "ws";
+import { WebSocket } from "ws";
 import createError from "http-errors";
 import path from "path";
 import { fileURLToPath } from "url";
