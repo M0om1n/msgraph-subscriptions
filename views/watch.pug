@@ -5,7 +5,7 @@ block content
   if userMode
     p(class='fs-5 mb-3')= `Notifications should appear below when new messages are delivered to ${user.name}'s inbox.`
   else
-    p(class='fs-5 mb-3')= `Notifications should appear below when new messages sent to any Teams channel in your organization.`
+    p(class='fs-5 mb-3')= `Notifications should appear below when new messages sent to user Lee mailbox.`
   div(class='d-flex')
     if userMode
       div(class='fs-4 me-2')= user.name
