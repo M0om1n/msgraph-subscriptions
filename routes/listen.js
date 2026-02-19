@@ -41,6 +41,8 @@ router.post('/', async function (req, res) {
     areTokensValid = validationResults.reduce((x, y) => x && y);
   }
 
+  console.log('areTokensValid:', areTokensValid);
+
   if (areTokensValid) {
     for (let i = 0; i < req.body.value.length; i++) {
       const notification = req.body.value[i];
@@ -77,6 +79,8 @@ router.post('/', async function (req, res) {
  * @param  {object} notification - The notification containing encrypted content
  */
 function processEncryptedNotification(notification) {
+  console.log(`Processing encrypted notification...`);
+
   // Decrypt the symmetric key sent by Microsoft Graph
   const symmetricKey = certHelper.decryptSymmetricKey(
     notification.encryptedContent.dataKey,
@@ -112,6 +116,8 @@ function processEncryptedNotification(notification) {
  * @param  {string} userAccountId - The user's account ID
  */
 async function processNotification(notification, msalClient, userAccountId) {
+  console.log(`Processing non-encrypted notification...`);
+
   // Get the message ID
   const messageId = notification.resourceData.id;
 
