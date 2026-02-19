@@ -1,6 +1,6 @@
 import express from "express";
 import { createServer } from "http";
-import { WebSocket } from "ws";
+import { WebSocketServer } from "ws";
 import createError from "http-errors";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -109,7 +109,7 @@ const port = process.env.PORT;
 //const server = app.listen(port, () => console.log(`App listening on port ${port}!`));
 
 const server = createServer(app);
-const wss = new WebSocket.Server({ server, path: '/ws' });
+const wss = new WebSocketServer({ server, path: '/ws' });
 
 app.locals.wss = wss;
 
