@@ -5,7 +5,7 @@ import express from "express";
 const router = express.Router();
 
 import graph from "../helpers/graphHelper.js";
-import ioServer from "../helpers/socketHelper.js";
+//import ioServer from "../helpers/socketHelper.js";
 import certHelper from "../helpers/certHelper.js";
 import tokenHelper from "../helpers/tokenHelper.js";
 import dbHelper from "../helpers/dbHelper.js";
@@ -141,7 +141,8 @@ async function processNotification(notification, msalClient, userAccountId) {
  * @param  {object} data - The data to send to the room
  */
 function emitNotification(subscriptionId, data) {
-  ioServer.to(subscriptionId).emit('notification_received', data);
+  //ioServer.to(subscriptionId).emit('notification_received', data);
+  console.log(`Emitting notification to room ${subscriptionId}: ${JSON.stringify(data)}`);
 }
 
 export default router;
