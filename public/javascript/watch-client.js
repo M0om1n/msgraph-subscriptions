@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 // Connect to the Socket.io server
-const socket = io('http://localhost:3001');
+const socket = io('http://localhost:3002');
 
 // Listen for notification received messages
 socket.on('notification_received', (notificationData) => {
