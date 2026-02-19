@@ -146,9 +146,11 @@ async function processNotification(notification, msalClient, userAccountId, wss)
  * @param  {WebSocket.Server} wss - The WebSocket server instance
  */
 function emitNotification(subscriptionId, data, wss) {
-  console.log(`Emitting notification to room ${subscriptionId}: ${JSON.stringify(data)}`);
+  console.log(`Emitting notification client ${subscriptionId}: ${JSON.stringify(data)}`);
   // Send the notification to the WebSocket
   wss.clients.forEach((client) => {
+    console.log(`Client processing...`); 
+
     if (client.readyState === WebSocket.OPEN /*&& client.subscriptionId === subscriptionId*/) {
       client.send(JSON.stringify(data));
     }

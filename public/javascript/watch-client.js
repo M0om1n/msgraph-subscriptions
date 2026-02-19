@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 // Connect to the WebSocket server
-const socket = new WebSocket(`wss://${window.location.host}/ws`);
+const socket = new WebSocket(`wss://hello-msgraph.onrender.com/ws`);
 
 // Listen for notification received messages
 socket.onmessage = (event) => {
