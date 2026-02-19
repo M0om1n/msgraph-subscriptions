@@ -18,7 +18,7 @@ router.get('/subscribe', async function (req, res) {
   try {
     const existingSubscriptions = dbHelper.getSubscriptionsByUserAccountId('APP-ONLY');
 
-    // Apps are only allowed one subscription to the /teams/getAllMessages resource
+    // Apps are only allowed one subscription to the /users/{id}/messages resource
     // If we already had one, delete it so we can create a new one
     if (existingSubscriptions) {
       for (var existingSub of existingSubscriptions) {
@@ -55,7 +55,7 @@ router.get('/subscribe', async function (req, res) {
     // Save the subscription ID in the session
     req.session.subscriptionId = subscription.id;
     console.log(
-      `Subscribed to Teams channel messages, subscription ID: ${subscription.id}`,
+      `Subscribed to user mailbox, subscription ID: ${subscription.id}`,
     );
 
     // Add subscription to the database
@@ -65,7 +65,7 @@ router.get('/subscribe', async function (req, res) {
     res.redirect('/watch');
   } catch (error) {
     req.flash('error_msg', {
-      message: 'Error subscribing for Teams channel message notifications',
+      message: 'Error subscribing for user mailbox notifications',
       debug: JSON.stringify(error, Object.getOwnPropertyNames(error)),
     });
 

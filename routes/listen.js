@@ -29,23 +29,16 @@ router.post('/', async function (req, res) {
 
   // Check for validation tokens, validate them if present
   let areTokensValid = true;
-  try {
-    if (req.body.validationTokens) {
-      const appId = process.env.OAUTH_CLIENT_ID;
-      const tenantId = process.env.OAUTH_TENANT_ID;
-      const validationResults = await Promise.all(
-        req.body.validationTokens.map((token) =>
-          tokenHelper.isTokenValid(token, appId, tenantId),
-        ),
-      );
-      areTokensValid = validationResults.reduce((x, y) => x && y);
-    } 
-  } catch (error) {
-    console.error('Error validating tokens:', error);
-    areTokensValid = false;
-  }
-
-  console.log('areTokensValid:', areTokensValid);
+  if (req.body.validationTokens) {
+    const appId = process.env.OAUTH_CLIENT_ID;
+    const tenantId = process.env.OAUTH_TENANT_ID;
+    const validationResults = await Promise.all(
+      req.body.validationTokens.map((token) =>
+        tokenHelper.isTokenValid(token, appId, tenantId),
+      ),
+    );
+    areTokensValid = validationResults.reduce((x, y) => x && y);
+  } 
 
   if (areTokensValid) {
     for (let i = 0; i < req.body.value.length; i++) {
@@ -86,8 +79,6 @@ router.post('/', async function (req, res) {
  * @param  {object} notification - The notification containing encrypted content
  */
 function processEncryptedNotification(notification) {
-  console.log(`Processing encrypted notification...`);
-
   // Decrypt the symmetric key sent by Microsoft Graph
   const symmetricKey = certHelper.decryptSymmetricKey(
     notification.encryptedContent.dataKey,
@@ -110,7 +101,7 @@ function processEncryptedNotification(notification) {
 
     // Send the notification to the Socket.io room
     emitNotification(notification.subscriptionId, {
-      type: 'chatMessage',
+      type: 'message',
       resource: JSON.parse(decryptedPayload),
     });
   }
@@ -123,11 +114,8 @@ function processEncryptedNotification(notification) {
  * @param  {string} userAccountId - The user's account ID
  */
 async function processNotification(notification, msalClient, userAccountId) {
-  console.log(`Processing non-encrypted notification...`);
-
   // Get the message ID
   const messageId = notification.resourceData.id;
-
   const client = graph.getGraphClientForUser(msalClient, userAccountId);
 
   try {

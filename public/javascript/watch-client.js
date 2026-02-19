@@ -11,6 +11,7 @@ socket.on('notification_received', (notificationData) => {
   // Create a new table row with data from the notification
   const tableRow = document.createElement('tr');
 
+  /* 
   if (notificationData.type == 'message') {
     // Email messages log subject and message ID
     const subjectCell = document.createElement('td');
@@ -20,7 +21,10 @@ socket.on('notification_received', (notificationData) => {
     const idCell = document.createElement('td');
     idCell.innerText = notificationData.resource.id;
     tableRow.appendChild(idCell);
-  } else if (notificationData.type === 'chatMessage') {
+  }
+  */
+
+  if (notificationData.type === 'message') {
     // Teams channel messages log sender and text
     const senderCell = document.createElement('td');
     senderCell.innerText =
