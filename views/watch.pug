@@ -29,6 +29,6 @@ block content
           th Message
     tbody(id='notifications')
 
-  script= `const subscriptionId = '${subscription?.id ?? 'none'}';`
-  script(src='http://localhost:3001/socket.io/socket.io.js')
+  script= `const subscriptionId = '${subscription ? subscription.id : 'none'}';`
+  script(src='http://localhost:3002/socket.io/socket.io.js')
   script(src='/javascript/watch-client.js')
