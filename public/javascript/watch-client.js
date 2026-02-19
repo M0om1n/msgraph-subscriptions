@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import WebSocket from "ws";
-
 // Connect to the WebSocket server
 const socket = new WebSocket(`wss://${window.location.host}/ws`);
 
