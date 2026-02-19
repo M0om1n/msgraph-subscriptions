@@ -29,11 +29,11 @@ socket.onmessage = (event) => {
     // Teams channel messages log sender and text
     const senderCell = document.createElement('td');
     senderCell.innerText =
-      notificationData.resource.from.user?.displayName || 'Unknown';
+      notificationData.resource.from?.emailAddress?.name || 'Unknown' + ' <' + notificationData.resource.from?.emailAddress?.address + '>';
     tableRow.appendChild(senderCell);
 
     const messageCell = document.createElement('td');
-    messageCell.innerText = notificationData.resource.body?.content || '';
+    messageCell.innerText = `subject: ${notificationData.resource.subject || ''} body: ${notificationData.resource.bodyPreview || ''}`;
     tableRow.appendChild(messageCell);
   }
 
