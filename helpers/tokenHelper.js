@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import jwksClient from "jwks-rsa";
 
 // Configure JSON web key set client to get keys
