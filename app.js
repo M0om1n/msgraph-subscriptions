@@ -1,4 +1,6 @@
 import express from "express";
+import { createServer } from "http";
+import WebSocket from "ws";
 import createError from "http-errors";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -102,9 +104,27 @@ app.use(function (err, req, res, next) {
   res.render('error');
 });
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT;
 
-const server = app.listen(port, () => console.log(`App listening on port ${port}!`));
+//const server = app.listen(port, () => console.log(`App listening on port ${port}!`));
+
+const server = createServer(app);
+const wss = new WebSocket.Server({ server, path: '/ws' });
+
+app.locals.wss = wss;
+
+// WebSocket connections
+wss.on('connection', (ws) => {
+  console.log('WebSocket client connected')
+
+  ws.on('message', (message) => {
+    console.log('Received:', message.toString())
+  })
+});
+
+server.listen(port, () => {
+  console.log(`Server listening on port ${port}`)
+});
 
 server.keepAliveTimeout = 120 * 1000;
 server.headersTimeout = 120 * 1000;

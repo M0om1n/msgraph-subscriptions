@@ -1,11 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-// Connect to the Socket.io server
-const socket = io();
+import WebSocket from "ws";
+
+// Connect to the WebSocket server
+const socket = new WebSocket(`wss://${window.location.host}/ws`);
 
 // Listen for notification received messages
-socket.on('notification_received', (notificationData) => {
+socket.onmessage = (event) => {
+  const notificationData = JSON.parse(event.data);
   console.log(`Received notification: ${JSON.stringify(notificationData)}`);
 
   // Create a new table row with data from the notification
@@ -37,7 +40,4 @@ socket.on('notification_received', (notificationData) => {
   }
 
   document.getElementById('notifications').appendChild(tableRow);
-});
-
-// Create a room for the subscription ID
-socket.emit('create_room', subscriptionId);
+};

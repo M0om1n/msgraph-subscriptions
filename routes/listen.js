@@ -5,7 +5,6 @@ import express from "express";
 const router = express.Router();
 
 import graph from "../helpers/graphHelper.js";
-//import ioServer from "../helpers/socketHelper.js";
 import certHelper from "../helpers/certHelper.js";
 import tokenHelper from "../helpers/tokenHelper.js";
 import dbHelper from "../helpers/dbHelper.js";
@@ -25,7 +24,9 @@ router.post('/', async function (req, res) {
     return;
   }
 
+  console.log(`--------- Received notification ---------`);
   console.log(JSON.stringify(req.body, null, 2));
+  console.log(`-----------------------------------------`);
 
   // Check for validation tokens, validate them if present
   let areTokensValid = true;
@@ -55,7 +56,7 @@ router.post('/', async function (req, res) {
 
           // If notification has encrypted content, process that
           if (notification.encryptedContent) {
-            processEncryptedNotification(notification);
+            processEncryptedNotification(notification, req.app.locals.wss);
           } 
           /*
           else {
@@ -63,6 +64,7 @@ router.post('/', async function (req, res) {
               notification,
               req.app.locals.msalClient,
               subscription.userAccountId,
+              req.app.locals.wss
             );
           }
           */  
@@ -78,7 +80,7 @@ router.post('/', async function (req, res) {
  * Processes an encrypted notification
  * @param  {object} notification - The notification containing encrypted content
  */
-function processEncryptedNotification(notification) {
+function processEncryptedNotification(notification, wss) {
   // Decrypt the symmetric key sent by Microsoft Graph
   const symmetricKey = certHelper.decryptSymmetricKey(
     notification.encryptedContent.dataKey,
@@ -99,11 +101,11 @@ function processEncryptedNotification(notification) {
       symmetricKey,
     );
 
-    // Send the notification to the Socket.io room
+    // Send the notification to the WebSocket
     emitNotification(notification.subscriptionId, {
       type: 'message',
       resource: JSON.parse(decryptedPayload),
-    });
+    }, wss);
   }
 }
 
@@ -112,8 +114,9 @@ function processEncryptedNotification(notification) {
  * @param  {object} notification - The notification to process
  * @param  {IConfidentialClientApplication} msalClient - The MSAL client to retrieve tokens for Graph requests
  * @param  {string} userAccountId - The user's account ID
+ * @param  {WebSocket.Server} wss - The WebSocket server instance
  */
-async function processNotification(notification, msalClient, userAccountId) {
+async function processNotification(notification, msalClient, userAccountId, wss) {
   // Get the message ID
   const messageId = notification.resourceData.id;
   const client = graph.getGraphClientForUser(msalClient, userAccountId);
@@ -125,11 +128,11 @@ async function processNotification(notification, msalClient, userAccountId) {
       .select('subject,id')
       .get();
 
-    // Send the notification to the Socket.io room
+    // Send the notification to the WebSocket
     emitNotification(notification.subscriptionId, {
       type: 'message',
       resource: message,
-    });
+    }, wss);
   } catch (err) {
     console.log(`Error getting message with ${messageId}:`);
     console.error(err);
@@ -137,13 +140,19 @@ async function processNotification(notification, msalClient, userAccountId) {
 }
 
 /**
- * Sends a notification to a Socket.io room
+ * Sends a notification
  * @param  {string} subscriptionId - The subscription ID used to send to the correct room
  * @param  {object} data - The data to send to the room
+ * @param  {WebSocket.Server} wss - The WebSocket server instance
  */
-function emitNotification(subscriptionId, data) {
-  //ioServer.to(subscriptionId).emit('notification_received', data);
+function emitNotification(subscriptionId, data, wss) {
   console.log(`Emitting notification to room ${subscriptionId}: ${JSON.stringify(data)}`);
+  // Send the notification to the WebSocket
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN /*&& client.subscriptionId === subscriptionId*/) {
+      client.send(JSON.stringify(data));
+    }
+  });
 }
 
 export default router;
