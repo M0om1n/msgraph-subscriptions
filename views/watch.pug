@@ -30,5 +30,5 @@ block content
     tbody(id='notifications')
 
   script= `const subscriptionId = '${subscription ? subscription.id : 'none'}';`
-  script(src='http://localhost:3002/socket.io/socket.io.js')
+  script(src='/socket.io/socket.io.js')
   script(src='/javascript/watch-client.js')
