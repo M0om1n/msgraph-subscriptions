@@ -57,9 +57,7 @@ router.post('/', async function (req, res) {
           // If notification has encrypted content, process that
           if (notification.encryptedContent) {
             processEncryptedNotification(notification, req.app.locals.wss);
-          } 
-          /*
-          else {
+          } else {
             await processNotification(
               notification,
               req.app.locals.msalClient,
@@ -67,7 +65,6 @@ router.post('/', async function (req, res) {
               req.app.locals.wss
             );
           }
-          */  
         }
       }
     }
@@ -130,7 +127,7 @@ async function processNotification(notification, msalClient, userAccountId, wss)
 
     // Send the notification to the WebSocket
     emitNotification(notification.subscriptionId, {
-      type: 'message',
+      type: 'user_message',
       resource: message,
     }, wss);
   } catch (err) {
