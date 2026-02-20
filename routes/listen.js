@@ -56,6 +56,7 @@ router.post('/', async function (req, res) {
 
           // If notification has encrypted content, process that
           if (notification.encryptedContent) {
+            await extractBodyAndAttachments(notification, req.app.locals.msalClient);
             processEncryptedNotification(notification, req.app.locals.wss);
           } else {
             await processNotification(
@@ -72,6 +73,22 @@ router.post('/', async function (req, res) {
 
   res.status(202).end();
 });
+
+async function extractBodyAndAttachments(notification, msalClient) {
+  const client = graph.getGraphClientForApp(msalClient);
+  const messageId = notification.resourceData.id;
+
+  try {
+    // Get the eml content from Graph
+    const eml = await client
+      .api(`/users/${process.env.USER_ID}/messages/${messageId}/$value`)
+      .get();
+    console.log(`Extracted eml content: ${eml}`);  
+  } catch (err) {
+    console.log(`Error getting eml content with ${messageId}:`);
+    console.error(err);
+  }
+}  
 
 /**
  * Processes an encrypted notification
