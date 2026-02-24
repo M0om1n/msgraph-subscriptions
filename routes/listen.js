@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 import express from "express";
+import PostalMime from "postal-mime";
+
 const router = express.Router();
 
 import graph from "../helpers/graphHelper.js";
@@ -83,7 +85,17 @@ async function extractBodyAndAttachments(notification, msalClient) {
     const eml = await client
       .api(`/users/${process.env.USER_ID}/messages/${messageId}/$value`)
       .get();
-    console.log(`Extracted eml content: ${eml}`);  
+    const email = await PostalMime.parse(eml);
+
+    console.log(`Extracted html body: ${email.html}`);
+
+    if (email.attachments.length > 0) {
+      console.log(`Attachments:`);
+      email.attachments.forEach((attachment) => {
+        console.log(`- ${attachment.filename} (${attachment.contentType})`);
+      });
+    }   
+
   } catch (err) {
     console.log(`Error getting eml content with ${messageId}:`);
     console.error(err);
