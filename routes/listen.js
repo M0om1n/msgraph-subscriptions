@@ -92,7 +92,7 @@ async function extractBodyAndAttachments(notification, msalClient) {
     if (email.attachments.length > 0) {
       console.log(`Attachments:`);
       email.attachments.forEach((attachment) => {
-        console.log(`- ${attachment.filename} (${attachment.contentType})`);
+        console.log(`- ${attachment.filename} (${attachment.disposition}/${attachment.mimeType})`);
       });
     }   
 
