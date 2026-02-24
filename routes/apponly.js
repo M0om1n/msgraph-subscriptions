@@ -39,7 +39,7 @@ router.get('/subscribe', async function (req, res) {
       changeType: 'created',
       notificationUrl: `${notificationHost}/listen`,
       lifecycleNotificationUrl: `${notificationHost}/lifecycle`,
-      resource: `users/${process.env.USER_ID}/messages?$select=subject,from,bodyPreview`,
+      resource: `users/${process.env.USER_ID}/messages?$select=subject,from,bodyPreview,parentFolderId`,
       clientState: process.env.SUBSCRIPTION_CLIENT_STATE,
       includeResourceData: true,
       // To get resource data, we must provide a public key that
