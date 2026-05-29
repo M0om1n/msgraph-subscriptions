@@ -12,27 +12,42 @@ socket.onmessage = (event) => {
   // Create a new table row with data from the notification
   const tableRow = document.createElement('tr');
 
-  if (notificationData.type == 'user_message') {
-    // Email messages log subject and message ID
+  if (notificationData.type == 'user_event') {
+    // Delegated notifications log event subject and start time
     const subjectCell = document.createElement('td');
-    subjectCell.innerText = notificationData.resource.subject;
+    subjectCell.innerText = notificationData.resource.subject || '(no subject)';
     tableRow.appendChild(subjectCell);
 
-    const idCell = document.createElement('td');
-    idCell.innerText = notificationData.resource.id;
-    tableRow.appendChild(idCell);
+    const startCell = document.createElement('td');
+    startCell.innerText = formatEventDateTime(notificationData.resource.start);
+    tableRow.appendChild(startCell);
   }
-  if (notificationData.type === 'message') {
-    // Teams channel messages log sender and text
-    const senderCell = document.createElement('td');
-    senderCell.innerText =
-      notificationData.resource.from?.emailAddress?.name || 'Unknown' + ' <' + notificationData.resource.from?.emailAddress?.address + '>';
-    tableRow.appendChild(senderCell);
+  if (notificationData.type === 'app_event') {
+    // App-only notifications log organizer and event details
+    const organizerCell = document.createElement('td');
+    organizerCell.innerText =
+      notificationData.resource.organizer?.emailAddress?.name ||
+      notificationData.resource.organizer?.emailAddress?.address ||
+      'Unknown';
+    tableRow.appendChild(organizerCell);
 
-    const messageCell = document.createElement('td');
-    messageCell.innerText = `subject: ${notificationData.resource.subject || ''} body: ${notificationData.resource.bodyPreview || ''}`;
-    tableRow.appendChild(messageCell);
+    const subjectCell = document.createElement('td');
+    subjectCell.innerText = notificationData.resource.subject || '(no subject)';
+    tableRow.appendChild(subjectCell);
+
+    const startCell = document.createElement('td');
+    startCell.innerText = formatEventDateTime(notificationData.resource.start);
+    tableRow.appendChild(startCell);
   }
 
   document.getElementById('notifications').appendChild(tableRow);
 };
+
+function formatEventDateTime(start) {
+  if (!start || !start.dateTime) {
+    return 'Unknown';
+  }
+
+  const timezone = start.timeZone || 'UTC';
+  return `${start.dateTime} (${timezone})`;
+}

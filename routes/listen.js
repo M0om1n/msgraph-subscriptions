@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 import express from "express";
-import PostalMime from "postal-mime";
 
 const router = express.Router();
 
@@ -58,7 +57,6 @@ router.post('/', async function (req, res) {
 
           // If notification has encrypted content, process that
           if (notification.encryptedContent) {
-            await extractBodyAndAttachments(notification, req.app.locals.msalClient);
             processEncryptedNotification(notification, req.app.locals.wss);
           } else {
             await processNotification(
@@ -75,32 +73,6 @@ router.post('/', async function (req, res) {
 
   res.status(202).end();
 });
-
-async function extractBodyAndAttachments(notification, msalClient) {
-  const client = graph.getGraphClientForApp(msalClient);
-  const messageId = notification.resourceData.id;
-
-  try {
-    // Get the eml content from Graph
-    const eml = await client
-      .api(`/users/${process.env.USER_ID}/messages/${messageId}/$value`)
-      .get();
-    const email = await PostalMime.parse(eml);
-
-    console.log(`Extracted html body: ${email.html}`);
-
-    if (email.attachments.length > 0) {
-      console.log(`Attachments:`);
-      email.attachments.forEach((attachment) => {
-        console.log(`- ${attachment.filename} (${attachment.disposition}/${attachment.mimeType})`);
-      });
-    }   
-
-  } catch (err) {
-    console.log(`Error getting eml content with ${messageId}:`);
-    console.error(err);
-  }
-}  
 
 /**
  * Processes an encrypted notification
@@ -129,7 +101,7 @@ function processEncryptedNotification(notification, wss) {
 
     // Send the notification to the WebSocket
     emitNotification(notification.subscriptionId, {
-      type: 'message',
+      type: 'app_event',
       resource: JSON.parse(decryptedPayload),
     }, wss);
   }
@@ -143,24 +115,24 @@ function processEncryptedNotification(notification, wss) {
  * @param  {WebSocket.Server} wss - The WebSocket server instance
  */
 async function processNotification(notification, msalClient, userAccountId, wss) {
-  // Get the message ID
-  const messageId = notification.resourceData.id;
+  // Get the event ID
+  const eventId = notification.resourceData.id;
   const client = graph.getGraphClientForUser(msalClient, userAccountId);
 
   try {
-    // Get the message from Graph
-    const message = await client
-      .api(`/me/messages/${messageId}`)
-      .select('subject,id')
+    // Get the event from Graph
+    const event = await client
+      .api(`/me/events/${eventId}`)
+      .select('id,subject,start,end,organizer')
       .get();
 
     // Send the notification to the WebSocket
     emitNotification(notification.subscriptionId, {
-      type: 'user_message',
-      resource: message,
+      type: 'user_event',
+      resource: event,
     }, wss);
   } catch (err) {
-    console.log(`Error getting message with ${messageId}:`);
+    console.log(`Error getting event with ${eventId}:`);
     console.error(err);
   }
 }

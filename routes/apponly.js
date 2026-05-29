@@ -18,7 +18,7 @@ router.get('/subscribe', async function (req, res) {
   try {
     const existingSubscriptions = dbHelper.getSubscriptionsByUserAccountId('APP-ONLY');
 
-    // Apps are only allowed one subscription to the /users/{id}/messages resource
+    // Apps are only allowed one subscription to the /users/{id}/events resource
     // If we already had one, delete it so we can create a new one
     if (existingSubscriptions) {
       for (var existingSub of existingSubscriptions) {
@@ -39,7 +39,7 @@ router.get('/subscribe', async function (req, res) {
       changeType: 'created',
       notificationUrl: `${notificationHost}/listen`,
       lifecycleNotificationUrl: `${notificationHost}/lifecycle`,
-      resource: `users/${process.env.USER_ID}/messages?$select=subject,from,bodyPreview,parentFolderId`,
+      resource: `users/${process.env.USER_ID}/events?$select=id,subject,start,end,organizer`,
       clientState: process.env.SUBSCRIPTION_CLIENT_STATE,
       includeResourceData: true,
       // To get resource data, we must provide a public key that
@@ -55,7 +55,7 @@ router.get('/subscribe', async function (req, res) {
     // Save the subscription ID in the session
     req.session.subscriptionId = subscription.id;
     console.log(
-      `Subscribed to user mailbox, subscription ID: ${subscription.id}`,
+      `Subscribed to user calendar events, subscription ID: ${subscription.id}`,
     );
 
     // Add subscription to the database
@@ -65,7 +65,7 @@ router.get('/subscribe', async function (req, res) {
     res.redirect('/watch');
   } catch (error) {
     req.flash('error_msg', {
-      message: 'Error subscribing for user mailbox notifications',
+      message: 'Error subscribing for user calendar event notifications',
       debug: JSON.stringify(error, Object.getOwnPropertyNames(error)),
     });
 
