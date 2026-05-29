@@ -5,12 +5,12 @@ block content
   if userMode
     p(class='fs-5 mb-3')= `Notifications should appear below when new calendar events are created for ${user.name}.`
   else
-    p(class='fs-5 mb-3')= `Notifications should appear below when new calendar events are created for ${appOnlyUser?.name || appOnlyUser?.id || 'the selected user'}.`
+    p(class='fs-5 mb-3')= `Notifications should appear below when new calendar events are created for ${(appOnlyUser && appOnlyUser.name) || (appOnlyUser && appOnlyUser.id) || 'the selected user'}.`
   div(class='d-flex')
     if userMode
       div(class='fs-4 me-2')= user.name
     else
-      div(class='fs-4 me-2')= appOnlyUser?.name || appOnlyUser?.id || ''
+      div(class='fs-4 me-2')= (appOnlyUser && appOnlyUser.name) || (appOnlyUser && appOnlyUser.id) || ''
     button(class='btn btn-outline-secondary me-2'
            type='button'
            data-bs-toggle='collapse'
