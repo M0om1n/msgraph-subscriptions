@@ -6,6 +6,9 @@ const router = express.Router();
 // GET /
 router.get('/', async function (req, res, next) {
   const users = [];
+  const calendars = [];
+  const selectedUserId = req.query.userId || process.env.USER_ID || '';
+  const selectedCalendarId = req.query.calendarId || '';
 
   try {
     const client = graph.getGraphClientForApp(req.app.locals.msalClient);
@@ -15,7 +18,7 @@ router.get('/', async function (req, res, next) {
       .top(25)
       .get();
 
-    if (response?.value) {
+    if (response && response.value) {
       for (const user of response.value) {
         users.push({
           id: user.id,
@@ -24,8 +27,26 @@ router.get('/', async function (req, res, next) {
         });
       }
     }
+
+    if (selectedUserId) {
+      const calendarsResponse = await client
+        .api(`/users/${selectedUserId}/calendars`)
+        .select('id,name,isDefaultCalendar')
+        .top(50)
+        .get();
+
+      if (calendarsResponse && calendarsResponse.value) {
+        for (const calendar of calendarsResponse.value) {
+          calendars.push({
+            id: calendar.id,
+            name: calendar.name || calendar.id,
+            isDefaultCalendar: calendar.isDefaultCalendar === true,
+          });
+        }
+      }
+    }
   } catch (error) {
-    console.log(`Unable to load users for app-only subscribe: ${error.message}`);
+    console.log(`Unable to load users/calendars for app-only subscribe: ${error.message}`);
   }
 
   // Ensure the configured fallback user is always available.
@@ -40,7 +61,9 @@ router.get('/', async function (req, res, next) {
   res.render('index', {
     title: 'Microsoft Graph Notifications Sample',
     users,
-    selectedUserId: process.env.USER_ID || '',
+    calendars,
+    selectedUserId,
+    selectedCalendarId,
   });
 });
 

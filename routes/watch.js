@@ -15,6 +15,7 @@ router.get('/', async function (req, res) {
   const subscriptionId = req.session.subscriptionId;
   const user = req.session.user;
   const appOnlyUser = req.session.appOnlyUser;
+  const appOnlyCalendar = req.session.appOnlyCalendar;
 
   if (!subscriptionId) {
     res.redirect('/');
@@ -38,6 +39,7 @@ router.get('/', async function (req, res) {
     subscription: subscription,
     user: user,
     appOnlyUser: appOnlyUser,
+    appOnlyCalendar: appOnlyCalendar,
     userMode: userMode,
   });
 });
