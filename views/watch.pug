@@ -3,9 +3,9 @@ extends layout
 block content
   h1 Notifications
   if userMode
-    p(class='fs-5 mb-3')= `Notifications should appear below when new messages are delivered to ${user.name}'s inbox.`
+    p(class='fs-5 mb-3')= `Notifications should appear below when new calendar events are created for ${user.name}.`
   else
-    p(class='fs-5 mb-3')= `Notifications should appear below when new messages sent to user Lee mailbox.`
+    p(class='fs-5 mb-3')= `Notifications should appear below when new calendar events are created for user Lee.`
   div(class='d-flex')
     if userMode
       div(class='fs-4 me-2')= user.name
@@ -23,10 +23,11 @@ block content
       tr
         if userMode
           th Subject
-          th ID
+          th Start
         else
-          th Sender
-          th Message
+          th Organizer
+          th Subject
+          th Start
     tbody(id='notifications')
 
   script= `const subscriptionId = '${subscription ? subscription.id : 'none'}';`

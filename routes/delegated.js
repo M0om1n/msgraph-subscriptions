@@ -63,7 +63,7 @@ router.get('/callback', async function (req, res) {
       changeType: 'created',
       notificationUrl: `${notificationHost}/listen`,
       lifecycleNotificationUrl: `${notificationHost}/lifecycle`,
-      resource: 'me/mailFolders/inbox/messages',
+      resource: 'me/events',
       clientState: process.env.SUBSCRIPTION_CLIENT_STATE,
       includeResourceData: false,
       expirationDateTime: new Date(Date.now() + 3600000).toISOString(),
@@ -71,7 +71,7 @@ router.get('/callback', async function (req, res) {
 
     // Save the subscription ID in the session
     req.session.subscriptionId = subscription.id;
-    console.log(`Subscribed to user's inbox, subscription ID: ${subscription.id}`);
+    console.log(`Subscribed to user's calendar events, subscription ID: ${subscription.id}`);
 
     // Add the subscription to the database
     dbHelper.addSubscription(subscription.id, req.session.userAccountId);
