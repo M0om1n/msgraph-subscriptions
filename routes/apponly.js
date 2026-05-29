@@ -11,11 +11,21 @@ import dbHelper from "../helpers/dbHelper.js";
 // GET /apponly/subscribe
 router.get('/subscribe', async function (req, res) {
   const client = graph.getGraphClientForApp(req.app.locals.msalClient);
+  const selectedUserId = req.query.userId || process.env.USER_ID;
 
   // In production, use the current host to receive notifications
   const notificationHost = `https://${req.hostname}`;
 
   try {
+    if (!selectedUserId) {
+      throw new Error('No user ID was provided and USER_ID is not configured.');
+    }
+
+    const selectedUser = await client
+      .api(`/users/${selectedUserId}`)
+      .select('id,displayName,mail,userPrincipalName')
+      .get();
+
     const existingSubscriptions = dbHelper.getSubscriptionsByUserAccountId('APP-ONLY');
 
     // Apps are only allowed one subscription to the /users/{id}/events resource
@@ -24,13 +34,13 @@ router.get('/subscribe', async function (req, res) {
       for (var existingSub of existingSubscriptions) {
         try {
           await client
-            .api(`/subscriptions/${existingSub.subscriptionId}`)
+            .api(`/subscriptions/${existingSub}`)
             .delete();
         } catch (err) {
           console.error(err);
         }
 
-        dbHelper.deleteSubscription(existingSub.subscriptionId);
+        dbHelper.deleteSubscription(existingSub);
       }
     }
 
@@ -39,7 +49,7 @@ router.get('/subscribe', async function (req, res) {
       changeType: 'created',
       notificationUrl: `${notificationHost}/listen`,
       lifecycleNotificationUrl: `${notificationHost}/lifecycle`,
-      resource: `users/${process.env.USER_ID}/events?$select=id,subject,start,end,organizer`,
+      resource: `users/${selectedUserId}/events?$select=id,subject,start,end,organizer`,
       clientState: process.env.SUBSCRIPTION_CLIENT_STATE,
       includeResourceData: true,
       // To get resource data, we must provide a public key that
@@ -54,8 +64,17 @@ router.get('/subscribe', async function (req, res) {
 
     // Save the subscription ID in the session
     req.session.subscriptionId = subscription.id;
+    req.session.appOnlyUser = {
+      id: selectedUser.id,
+      name:
+        selectedUser.displayName ||
+        selectedUser.userPrincipalName ||
+        selectedUser.mail ||
+        selectedUser.id,
+      email: selectedUser.mail || selectedUser.userPrincipalName || '',
+    };
     console.log(
-      `Subscribed to user calendar events, subscription ID: ${subscription.id}`,
+      `Subscribed to user ${selectedUserId} calendar events, subscription ID: ${subscription.id}`,
     );
 
     // Add subscription to the database
@@ -87,6 +106,7 @@ router.get('/signout', async function (req, res) {
     await client.api(`/subscriptions/${subscriptionId}`).delete();
 
     req.session.subscriptionId = null;
+    req.session.appOnlyUser = null;
   } catch (graphErr) {
     console.log(`Error deleting subscription from Graph: ${graphErr.message}`);
   }
