@@ -12,6 +12,7 @@ import dbHelper from "../helpers/dbHelper.js";
 router.get('/subscribe', async function (req, res) {
   const client = graph.getGraphClientForApp(req.app.locals.msalClient);
   const selectedUserId = req.query.userId || process.env.USER_ID;
+  const selectedCalendarId = req.query.calendarId || '';
 
   // In production, use the current host to receive notifications
   const notificationHost = `https://${req.hostname}`;
@@ -25,6 +26,14 @@ router.get('/subscribe', async function (req, res) {
       .api(`/users/${selectedUserId}`)
       .select('id,displayName,mail,userPrincipalName')
       .get();
+
+    let selectedCalendar = null;
+    if (selectedCalendarId) {
+      selectedCalendar = await client
+        .api(`/users/${selectedUserId}/calendars/${selectedCalendarId}`)
+        .select('id,name')
+        .get();
+    }
 
     const existingSubscriptions = dbHelper.getSubscriptionsByUserAccountId('APP-ONLY');
 
@@ -44,12 +53,16 @@ router.get('/subscribe', async function (req, res) {
       }
     }
 
+    const subscribedResource = selectedCalendarId
+      ? `users/${selectedUserId}/calendars/${selectedCalendarId}/events?$select=id,subject,start,end,organizer`
+      : `users/${selectedUserId}/events?$select=id,subject,start,end,organizer`;
+
     // Create the subscription
     const subscription = await client.api('/subscriptions').create({
       changeType: 'created',
       notificationUrl: `${notificationHost}/listen`,
       lifecycleNotificationUrl: `${notificationHost}/lifecycle`,
-      resource: `users/${selectedUserId}/events?$select=id,subject,start,end,organizer`,
+      resource: subscribedResource,
       clientState: process.env.SUBSCRIPTION_CLIENT_STATE,
       includeResourceData: true,
       // To get resource data, we must provide a public key that
@@ -73,8 +86,14 @@ router.get('/subscribe', async function (req, res) {
         selectedUser.id,
       email: selectedUser.mail || selectedUser.userPrincipalName || '',
     };
+    req.session.appOnlyCalendar = selectedCalendar
+      ? {
+        id: selectedCalendar.id,
+        name: selectedCalendar.name || selectedCalendar.id,
+      }
+      : null;
     console.log(
-      `Subscribed to user ${selectedUserId} calendar events, subscription ID: ${subscription.id}`,
+      `Subscribed to ${selectedCalendarId ? `calendar ${selectedCalendarId}` : 'primary calendar'} for user ${selectedUserId}, subscription ID: ${subscription.id}`,
     );
 
     // Add subscription to the database
@@ -107,6 +126,7 @@ router.get('/signout', async function (req, res) {
 
     req.session.subscriptionId = null;
     req.session.appOnlyUser = null;
+    req.session.appOnlyCalendar = null;
   } catch (graphErr) {
     console.log(`Error deleting subscription from Graph: ${graphErr.message}`);
   }
