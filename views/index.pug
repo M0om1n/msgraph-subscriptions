@@ -13,5 +13,15 @@ block content
     div(class='col-md-6')
       div(class='h-100 p-5 bg-light border rounded-3')
         h2 App-only authentication
-        p Choose this option to have the application receive notifications when new calendar events are created for user Lee
-        a(class='btn btn-outline-secondary', href='/apponly/subscribe') Subscribe
+        p Choose this option to receive notifications when new calendar events are created for a selected user
+        if users && users.length
+          form(method='get' action='/apponly/subscribe')
+            div(class='mb-3')
+              label(class='form-label' for='userId') User
+              select(class='form-select' id='userId' name='userId')
+                each optionUser in users
+                  option(value=optionUser.id selected=selectedUserId === optionUser.id)= `${optionUser.name}${optionUser.email ? ` (${optionUser.email})` : ''}`
+            button(class='btn btn-outline-secondary' type='submit') Subscribe
+        else
+          p(class='text-muted mb-3') No users were loaded. The app will use the configured USER_ID.
+          a(class='btn btn-outline-secondary', href='/apponly/subscribe') Subscribe

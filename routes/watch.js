@@ -14,6 +14,7 @@ router.get('/', async function (req, res) {
   const userAccountId = req.session.userAccountId;
   const subscriptionId = req.session.subscriptionId;
   const user = req.session.user;
+  const appOnlyUser = req.session.appOnlyUser;
 
   if (!subscriptionId) {
     res.redirect('/');
@@ -36,6 +37,7 @@ router.get('/', async function (req, res) {
   res.render('watch', {
     subscription: subscription,
     user: user,
+    appOnlyUser: appOnlyUser,
     userMode: userMode,
   });
 });
