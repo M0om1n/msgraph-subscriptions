@@ -57,7 +57,11 @@ router.post('/', async function (req, res) {
 
           // If notification has encrypted content, process that
           if (notification.encryptedContent) {
-            processEncryptedNotification(notification, req.app.locals.wss);
+            await processEncryptedNotification(
+              notification,
+              req.app.locals.wss,
+              req.app.locals.msalClient,
+            );
           } else {
             await processNotification(
               notification,
@@ -77,8 +81,10 @@ router.post('/', async function (req, res) {
 /**
  * Processes an encrypted notification
  * @param  {object} notification - The notification containing encrypted content
+ * @param  {WebSocket.Server} wss - The WebSocket server instance
+ * @param  {IConfidentialClientApplication} msalClient - The MSAL client to retrieve app-only tokens for Graph requests
  */
-function processEncryptedNotification(notification, wss) {
+async function processEncryptedNotification(notification, wss, msalClient) {
   // Decrypt the symmetric key sent by Microsoft Graph
   const symmetricKey = certHelper.decryptSymmetricKey(
     notification.encryptedContent.dataKey,
@@ -99,12 +105,101 @@ function processEncryptedNotification(notification, wss) {
       symmetricKey,
     );
 
+    const decryptedResource = JSON.parse(decryptedPayload);
+    const eventWithBody = await getAppEventWithBody(
+      notification,
+      decryptedResource,
+      msalClient,
+    );
+
     // Send the notification to the WebSocket
     emitNotification(notification.subscriptionId, {
       type: 'app_event',
-      resource: JSON.parse(decryptedPayload),
+      resource: eventWithBody,
     }, wss);
   }
+}
+
+/**
+ * Fetches only event body for app-only notifications
+ * @param  {object} notification - The webhook notification
+ * @param  {object} decryptedResource - The decrypted event payload
+ * @param  {IConfidentialClientApplication} msalClient - The MSAL client to retrieve app-only tokens for Graph requests
+ * @returns {object} Decrypted payload enriched with body when available
+ */
+async function getAppEventWithBody(notification, decryptedResource, msalClient) {
+  const eventPath = getEventPathFromNotification(
+    notification,
+    decryptedResource ? decryptedResource.id : null,
+  );
+
+  if (!eventPath) {
+    return decryptedResource;
+  }
+
+  try {
+    const client = graph.getGraphClientForApp(msalClient);
+    const event = await client
+      .api(eventPath)
+      .select('body')
+      .get();
+
+    return {
+      ...decryptedResource,
+      body: event && event.body ? event.body : null,
+    };
+  } catch (err) {
+    console.log(`Error getting app-only event from ${eventPath}:`);
+    console.error(err);
+    return decryptedResource;
+  }
+}
+
+/**
+ * Gets an event API path from a notification
+ * @param  {object} notification - The webhook notification
+ * @param  {string} eventId - The event ID
+ * @returns {string | null} A Graph API path for the event
+ */
+function getEventPathFromNotification(notification, eventId) {
+  const resourceData = notification ? notification.resourceData : null;
+  const odataId = resourceData ? resourceData['@odata.id'] : null;
+  if (odataId) {
+    return normalizeGraphPath(odataId);
+  }
+
+  const resource = notification && notification.resource
+    ? normalizeGraphPath(notification.resource)
+    : null;
+
+  if (!resource) {
+    return null;
+  }
+
+  const lowerResource = resource.toLowerCase();
+  if (lowerResource.includes('/events/')) {
+    return resource;
+  }
+
+  if (eventId && lowerResource.endsWith('/events')) {
+    return `${resource}/${eventId}`;
+  }
+
+  return null;
+}
+
+/**
+ * Normalizes Graph resource paths from webhook payloads
+ * @param  {string} rawPath - The raw Graph path
+ * @returns {string} A path suitable for Graph client .api()
+ */
+function normalizeGraphPath(rawPath) {
+  const basePath = String(rawPath || '').split('?')[0].trim();
+  if (!basePath) {
+    return '';
+  }
+
+  return basePath.startsWith('/') ? basePath : `/${basePath}`;
 }
 
 /**
