@@ -123,7 +123,7 @@ async function processNotification(notification, msalClient, userAccountId, wss)
     // Get the event from Graph
     const event = await client
       .api(`/me/events/${eventId}`)
-      .select('id,subject,start,end,organizer')
+      .select('id,subject,start,end,organizer,body,bodyPreview,attendees,location')
       .get();
 
     // Send the notification to the WebSocket

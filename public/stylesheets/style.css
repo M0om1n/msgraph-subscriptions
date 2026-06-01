@@ -3,3 +3,12 @@
   word-break: break-all;
   white-space: pre-wrap;
 }
+
+.expandable-cell-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.expandable-cell-toggle {
+  text-decoration: none;
+}
