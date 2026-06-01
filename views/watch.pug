@@ -26,10 +26,18 @@ block content
         if userMode
           th Subject
           th Start
+          th Location
+          th Attendees
+          th Body preview
+          th Body
         else
           th Organizer
           th Subject
           th Start
+          th Location
+          th Attendees
+          th Body preview
+          th Body
     tbody(id='notifications')
 
   script= `const subscriptionId = '${subscription ? subscription.id : 'none'}';`
