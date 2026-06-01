@@ -54,8 +54,8 @@ router.get('/subscribe', async function (req, res) {
     }
 
     const subscribedResource = selectedCalendarId
-      ? `users/${selectedUserId}/calendars/${selectedCalendarId}/events?$select=id,subject,start,end,organizer,body,bodyPreview,attendees,location`
-      : `users/${selectedUserId}/events?$select=id,subject,start,end,organizer,body,bodyPreview,attendees,location`;
+      ? `users/${selectedUserId}/calendars/${selectedCalendarId}/events?$select=id,subject,start,end,organizer,bodyPreview,attendees,location`
+      : `users/${selectedUserId}/events?$select=id,subject,start,end,organizer,bodyPreview,attendees,location`;
 
     // Create the subscription
     const subscription = await client.api('/subscriptions').create({
