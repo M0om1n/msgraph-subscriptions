@@ -213,9 +213,114 @@ router.post('/user-flow/subscribe', async function (req, res) {
   res.redirect(`/user-flow?subscribed=${subscribedCount}&failed=${failedCount}`);
 });
 
-router.get('/admin-flow', function (req, res) {
+router.get('/admin-flow', async function (req, res) {
+  const users = [];
+  const calendars = [];
+  const activeSubscriptions = [];
+  const selectedUserId = req.query.userId || process.env.USER_ID || '';
+
+  try {
+    const client = graph.getGraphClientForApp(req.app.locals.msalClient);
+    const usersResponse = await client
+      .api('/users')
+      .select('id,displayName,mail,userPrincipalName')
+      .top(50)
+      .get();
+
+    if (usersResponse && usersResponse.value) {
+      for (const user of usersResponse.value) {
+        users.push({
+          id: user.id,
+          name: user.displayName || user.userPrincipalName || user.mail || user.id,
+          email: user.mail || user.userPrincipalName || '',
+        });
+      }
+    }
+
+    if (selectedUserId) {
+      const calendarsResponse = await client
+        .api(`/users/${selectedUserId}/calendars`)
+        .select('id,name,isDefaultCalendar')
+        .top(100)
+        .get();
+
+      if (calendarsResponse && calendarsResponse.value) {
+        for (const calendar of calendarsResponse.value) {
+          calendars.push({
+            id: calendar.id,
+            name: calendar.name || calendar.id,
+            isDefaultCalendar: calendar.isDefaultCalendar === true,
+          });
+        }
+      }
+    }
+
+    const subscriptionOwners = ['APP-ONLY', 'APP-ONLY-USER-FLOW'];
+    const seenSubscriptionIds = new Set();
+
+    for (const owner of subscriptionOwners) {
+      const subscriptionIds = dbHelper.getSubscriptionsByUserAccountId(owner);
+      for (const subscriptionId of subscriptionIds) {
+        if (seenSubscriptionIds.has(subscriptionId)) {
+          continue;
+        }
+
+        seenSubscriptionIds.add(subscriptionId);
+
+        try {
+          const subscription = await client
+            .api(`/subscriptions/${subscriptionId}`)
+            .get();
+
+          activeSubscriptions.push({
+            id: subscription.id,
+            owner,
+            changeType: subscription.changeType || '',
+            resource: subscription.resource || '',
+            expirationDateTime: subscription.expirationDateTime || '',
+            notificationUrl: subscription.notificationUrl || '',
+            hasError: false,
+          });
+        } catch (subscriptionError) {
+          activeSubscriptions.push({
+            id: subscriptionId,
+            owner,
+            changeType: '',
+            resource: '',
+            expirationDateTime: '',
+            notificationUrl: '',
+            hasError: true,
+            errorMessage: subscriptionError.message || 'Unable to load subscription details.',
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.log(`Unable to load admin flow data: ${error.message}`);
+  }
+
+  activeSubscriptions.sort((a, b) => {
+    if (!a.expirationDateTime && !b.expirationDateTime) {
+      return 0;
+    }
+
+    if (!a.expirationDateTime) {
+      return 1;
+    }
+
+    if (!b.expirationDateTime) {
+      return -1;
+    }
+
+    return a.expirationDateTime.localeCompare(b.expirationDateTime);
+  });
+
   res.render('admin-flow', {
     title: 'Admin Flow',
+    users,
+    calendars,
+    selectedUserId,
+    activeSubscriptions,
   });
 });
 
