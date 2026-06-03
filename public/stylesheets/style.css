@@ -17,10 +17,44 @@
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
-.admin-col-user {
-  min-width: 170px;
+.admin-subscriptions-table {
+  table-layout: fixed;
+  width: 100%;
 }
 
-.admin-col-calendar {
-  min-width: 190px;
+.admin-subscriptions-table .col-db {
+  width: 6%;
+}
+
+.admin-subscriptions-table .col-user {
+  width: 16%;
+}
+
+.admin-subscriptions-table .col-calendar {
+  width: 18%;
+}
+
+.admin-subscriptions-table .col-events {
+  width: 9%;
+}
+
+.admin-subscriptions-table .col-fields {
+  width: 24%;
+}
+
+.admin-subscriptions-table .col-expires {
+  width: 14%;
+}
+
+.admin-subscriptions-table .col-action {
+  width: 13%;
+}
+
+.admin-cell-user,
+.admin-cell-calendar {
+  overflow-wrap: anywhere;
+}
+
+.admin-field-badges {
+  max-width: 100%;
 }
