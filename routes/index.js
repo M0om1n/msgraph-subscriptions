@@ -220,6 +220,7 @@ router.get('/admin-flow', async function (req, res) {
   const calendars = [];
   const activeSubscriptions = [];
   const selectedUserId = req.query.userId || process.env.USER_ID || '';
+  const syncComparison = { matched: [], graphOnly: [], dbOnly: [] };
 
   try {
     const client = graph.getGraphClientForApp(req.app.locals.msalClient);
@@ -279,12 +280,6 @@ router.get('/admin-flow', async function (req, res) {
     }
 
     // Compute diff categories
-    const syncComparison = {
-      matched: [],
-      graphOnly: [],
-      dbOnly: [],
-    };
-
     for (const [id, sub] of graphSubscriptionMap) {
       if (dbSubscriptionIds.has(id)) {
         syncComparison.matched.push({ id, resource: sub.resource || '', expirationDateTime: sub.expirationDateTime || '', owner: dbSubscriptionIds.get(id) });
@@ -364,7 +359,7 @@ router.get('/admin-flow', async function (req, res) {
     calendars,
     selectedUserId,
     activeSubscriptions,
-    syncComparison: syncComparison || { matched: [], graphOnly: [], dbOnly: [] },
+    syncComparison: syncComparison,
   });
 });
 
