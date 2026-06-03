@@ -339,7 +339,22 @@ router.get('/admin-flow', async function (req, res) {
     if (graphSubsResponse && graphSubsResponse.value) {
       for (const sub of graphSubsResponse.value) {
         const inDb = dbSubscriptionIds.has(sub.id);
-        const parsedState = subscriptionStateHelper.parseClientState(sub.clientState);
+        let clientStateValue = sub.clientState;
+
+        // Some Graph list responses omit clientState. Fetch full details as fallback.
+        if (!clientStateValue) {
+          try {
+            const details = await client
+              .api(`/subscriptions/${sub.id}`)
+              .select('clientState')
+              .get();
+            clientStateValue = details ? details.clientState : '';
+          } catch (detailsError) {
+            console.log(`Unable to load clientState for subscription ${sub.id}: ${detailsError.message}`);
+          }
+        }
+
+        const parsedState = subscriptionStateHelper.parseClientState(clientStateValue);
         const stateMetadata = parsedState.metadata || {};
 
         graphSubscriptions.push({

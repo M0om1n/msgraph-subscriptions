@@ -6,6 +6,7 @@ const router = express.Router();
 
 import graph from "../helpers/graphHelper.js";
 import dbHelper from "../helpers/dbHelper.js";
+import subscriptionStateHelper from "../helpers/subscriptionStateHelper.js";
 
 // GET /delegated/signin
 router.get('/signin', async function (req, res) {
@@ -64,7 +65,13 @@ router.get('/callback', async function (req, res) {
       notificationUrl: `${notificationHost}/listen`,
       lifecycleNotificationUrl: `${notificationHost}/lifecycle`,
       resource: 'me/events',
-      clientState: process.env.SUBSCRIPTION_CLIENT_STATE,
+      clientState: subscriptionStateHelper.buildClientState(
+        process.env.SUBSCRIPTION_CLIENT_STATE,
+        {
+          userName: user.displayName || user.mail || '',
+          calendarName: 'Primary calendar',
+        },
+      ),
       includeResourceData: false,
       expirationDateTime: new Date(Date.now() + 3600000).toISOString(),
     });
