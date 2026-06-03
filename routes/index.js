@@ -113,12 +113,14 @@ router.get('/user-flow', async function (req, res) {
           const existingSubscription = await client
             .api(`/subscriptions/${subscriptionId}`)
             .get();
-          const resource = String(existingSubscription.resource || '').toLowerCase();
-          const marker = `/users/${selectedUserId.toLowerCase()}/calendars/`;
+          // Normalize: strip optional leading slash so matching works regardless
+          // of whether Graph returns "users/..." or "/users/..."
+          const resource = String(existingSubscription.resource || '').toLowerCase().replace(/^\//, '');
+          const marker = `users/${selectedUserId.toLowerCase()}/calendars/`;
 
           if (resource.includes(marker)) {
             const afterMarker = resource.split(marker)[1] || '';
-            const calendarId = afterMarker.split('/events')[0] || '';
+            const calendarId = afterMarker.split('/')[0] || '';
             if (calendarId) {
               subscribedCalendarIds.add(calendarId.toLowerCase());
             }
