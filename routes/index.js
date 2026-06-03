@@ -2,6 +2,7 @@ import express from "express";
 import graph from "../helpers/graphHelper.js";
 import certHelper from "../helpers/certHelper.js";
 import dbHelper from "../helpers/dbHelper.js";
+import subscriptionStateHelper from "../helpers/subscriptionStateHelper.js";
 
 const router = express.Router();
 
@@ -187,15 +188,57 @@ router.post('/user-flow/subscribe', async function (req, res) {
 
   let subscribedCount = 0;
   let failedCount = 0;
+  let selectedUserName = selectedUserId;
+  const calendarNameById = new Map();
+
+  try {
+    const selectedUser = await client
+      .api(`/users/${selectedUserId}`)
+      .select('displayName,mail,userPrincipalName')
+      .get();
+
+    selectedUserName =
+      selectedUser.displayName ||
+      selectedUser.userPrincipalName ||
+      selectedUser.mail ||
+      selectedUserId;
+
+    const calendarsResponse = await client
+      .api(`/users/${selectedUserId}/calendars`)
+      .select('id,name')
+      .top(100)
+      .get();
+
+    if (calendarsResponse && calendarsResponse.value) {
+      for (const calendar of calendarsResponse.value) {
+        calendarNameById.set(
+          String(calendar.id || '').toLowerCase(),
+          calendar.name || calendar.id,
+        );
+      }
+    }
+  } catch (lookupError) {
+    console.log(`Unable to load user/calendar names for clientState metadata: ${lookupError.message}`);
+  }
 
   for (const calendarId of selectedCalendarIds) {
     try {
+      const calendarName =
+        calendarNameById.get(String(calendarId || '').toLowerCase()) ||
+        calendarId;
+
       const subscription = await client.api('/subscriptions').create({
         changeType: 'created',
         notificationUrl: `${notificationHost}/listen`,
         lifecycleNotificationUrl: `${notificationHost}/lifecycle`,
         resource: `users/${selectedUserId}/calendars/${calendarId}/events?$select=id,subject,start,end,organizer,bodyPreview,attendees,location`,
-        clientState: process.env.SUBSCRIPTION_CLIENT_STATE,
+        clientState: subscriptionStateHelper.buildClientState(
+          process.env.SUBSCRIPTION_CLIENT_STATE,
+          {
+            userName: selectedUserName,
+            calendarName: calendarName,
+          },
+        ),
         includeResourceData: true,
         encryptionCertificate: certHelper.getSerializedCertificate(
           process.env.CERTIFICATE_PATH,
@@ -218,9 +261,8 @@ router.post('/user-flow/subscribe', async function (req, res) {
 router.get('/admin-flow', async function (req, res) {
   const users = [];
   const calendars = [];
-  const activeSubscriptions = [];
+  const graphSubscriptions = [];
   const selectedUserId = req.query.userId || process.env.USER_ID || '';
-  const syncComparison = { matched: [], graphOnly: [], dbOnly: [] };
 
   try {
     const client = graph.getGraphClientForApp(req.app.locals.msalClient);
@@ -258,17 +300,8 @@ router.get('/admin-flow', async function (req, res) {
       }
     }
 
-    // Fetch ALL subscriptions from Graph and DB in parallel
-    const [graphSubsResponse] = await Promise.all([
-      client.api('/subscriptions').get(),
-    ]);
-
-    const graphSubscriptionMap = new Map();
-    if (graphSubsResponse && graphSubsResponse.value) {
-      for (const sub of graphSubsResponse.value) {
-        graphSubscriptionMap.set(sub.id, sub);
-      }
-    }
+    // Fetch ALL subscriptions from Graph
+    const graphSubsResponse = await client.api('/subscriptions').get();
 
     // Collect every ID the DB knows about
     const subscriptionOwners = ['APP-ONLY', 'APP-ONLY-USER-FLOW'];
@@ -279,77 +312,33 @@ router.get('/admin-flow', async function (req, res) {
       }
     }
 
-    // Compute diff categories
-    for (const [id, sub] of graphSubscriptionMap) {
-      if (dbSubscriptionIds.has(id)) {
-        syncComparison.matched.push({ id, resource: sub.resource || '', expirationDateTime: sub.expirationDateTime || '', owner: dbSubscriptionIds.get(id) });
-      } else {
-        syncComparison.graphOnly.push({ id, resource: sub.resource || '', expirationDateTime: sub.expirationDateTime || '' });
-      }
-    }
+    if (graphSubsResponse && graphSubsResponse.value) {
+      for (const sub of graphSubsResponse.value) {
+        const inDb = dbSubscriptionIds.has(sub.id);
+        const parsedState = subscriptionStateHelper.parseClientState(sub.clientState);
+        const stateMetadata = parsedState.metadata || {};
 
-    for (const [id, owner] of dbSubscriptionIds) {
-      if (!graphSubscriptionMap.has(id)) {
-        syncComparison.dbOnly.push({ id, owner });
-      }
-    }
-
-    const seenSubscriptionIds = new Set();
-
-    for (const owner of subscriptionOwners) {
-      const subscriptionIds = dbHelper.getSubscriptionsByUserAccountId(owner);
-      for (const subscriptionId of subscriptionIds) {
-        if (seenSubscriptionIds.has(subscriptionId)) {
-          continue;
-        }
-
-        seenSubscriptionIds.add(subscriptionId);
-
-        try {
-          const subscription = await client
-            .api(`/subscriptions/${subscriptionId}`)
-            .get();
-
-          activeSubscriptions.push({
-            id: subscription.id,
-            owner,
-            changeType: subscription.changeType || '',
-            resource: subscription.resource || '',
-            expirationDateTime: subscription.expirationDateTime || '',
-            notificationUrl: subscription.notificationUrl || '',
-            hasError: false,
-          });
-        } catch (subscriptionError) {
-          activeSubscriptions.push({
-            id: subscriptionId,
-            owner,
-            changeType: '',
-            resource: '',
-            expirationDateTime: '',
-            notificationUrl: '',
-            hasError: true,
-            errorMessage: subscriptionError.message || 'Unable to load subscription details.',
-          });
-        }
+        graphSubscriptions.push({
+          id: sub.id,
+          changeType: sub.changeType || '',
+          resource: sub.resource || '',
+          expirationDateTime: sub.expirationDateTime || '',
+          notificationUrl: sub.notificationUrl || '',
+          owner: inDb ? dbSubscriptionIds.get(sub.id) : '',
+          inDb,
+          userName: stateMetadata.userName || '',
+          calendarName: stateMetadata.calendarName || '',
+        });
       }
     }
   } catch (error) {
     console.log(`Unable to load admin flow data: ${error.message}`);
   }
 
-  activeSubscriptions.sort((a, b) => {
-    if (!a.expirationDateTime && !b.expirationDateTime) {
-      return 0;
-    }
-
-    if (!a.expirationDateTime) {
-      return 1;
-    }
-
-    if (!b.expirationDateTime) {
-      return -1;
-    }
-
+  graphSubscriptions.sort((a, b) => {
+    if (!a.expirationDateTime && !b.expirationDateTime) return 0;
+    if (!a.expirationDateTime) return 1;
+    if (!b.expirationDateTime) return -1;
     return a.expirationDateTime.localeCompare(b.expirationDateTime);
   });
 
@@ -358,8 +347,7 @@ router.get('/admin-flow', async function (req, res) {
     users,
     calendars,
     selectedUserId,
-    activeSubscriptions,
-    syncComparison: syncComparison,
+    graphSubscriptions,
   });
 });
 

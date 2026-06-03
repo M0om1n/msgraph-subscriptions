@@ -6,6 +6,7 @@ const router = express.Router();
 
 import graph from "../helpers/graphHelper.js";
 import dbHelper from "../helpers/dbHelper.js";
+import subscriptionStateHelper from "../helpers/subscriptionStateHelper.js";
 
 // POST /lifecycle
 router.post('/', async function (req, res) {
@@ -30,7 +31,10 @@ router.post('/', async function (req, res) {
     // Verify the client state matches the expected value
     // and that this is a lifecycle notification
     if (
-      notification.clientState === process.env.SUBSCRIPTION_CLIENT_STATE &&
+      subscriptionStateHelper.isExpectedClientState(
+        notification.clientState,
+        process.env.SUBSCRIPTION_CLIENT_STATE,
+      ) &&
       notification.lifecycleEvent === 'reauthorizationRequired'
     ) {
       // Verify we have a matching subscription record in the database

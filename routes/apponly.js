@@ -7,6 +7,7 @@ const router = express.Router();
 import graph from "../helpers/graphHelper.js";
 import certHelper from "../helpers/certHelper.js";
 import dbHelper from "../helpers/dbHelper.js";
+import subscriptionStateHelper from "../helpers/subscriptionStateHelper.js";
 
 // GET /apponly/subscribe
 router.get('/subscribe', async function (req, res) {
@@ -57,13 +58,28 @@ router.get('/subscribe', async function (req, res) {
       ? `users/${selectedUserId}/calendars/${selectedCalendarId}/events?$select=id,subject,start,end,organizer,bodyPreview,attendees,location`
       : `users/${selectedUserId}/events?$select=id,subject,start,end,organizer,bodyPreview,attendees,location`;
 
+    const selectedUserName =
+      selectedUser.displayName ||
+      selectedUser.userPrincipalName ||
+      selectedUser.mail ||
+      selectedUser.id;
+    const selectedCalendarName = selectedCalendar
+      ? selectedCalendar.name || selectedCalendar.id
+      : 'Primary calendar';
+
     // Create the subscription
     const subscription = await client.api('/subscriptions').create({
       changeType: 'created',
       notificationUrl: `${notificationHost}/listen`,
       lifecycleNotificationUrl: `${notificationHost}/lifecycle`,
       resource: subscribedResource,
-      clientState: process.env.SUBSCRIPTION_CLIENT_STATE,
+      clientState: subscriptionStateHelper.buildClientState(
+        process.env.SUBSCRIPTION_CLIENT_STATE,
+        {
+          userName: selectedUserName,
+          calendarName: selectedCalendarName,
+        },
+      ),
       includeResourceData: true,
       // To get resource data, we must provide a public key that
       // Microsoft Graph will use to encrypt their key
