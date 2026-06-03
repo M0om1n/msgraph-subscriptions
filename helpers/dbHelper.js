@@ -10,11 +10,11 @@ export default {
    * @returns {object} The subscription
    */
   getSubscription: (subscriptionId) => {
-    const userAccountId = storage.get(subscriptionId);
-    if (userAccountId) {
+    if (storage.has(subscriptionId)) {
+      const userAccountId = storage.get(subscriptionId);
       return {
         subscriptionId,
-        userAccountId
+        userAccountId,
       };
     }
     return null;
@@ -26,8 +26,8 @@ export default {
    */
   getSubscriptionsByUserAccountId: (userAccountId) => {
     return [...storage]
-      .filter(([key, value]) => value === userAccountId) 
-      .map(([key, value]) => key);
+      .filter(([, storedUserAccountId]) => storedUserAccountId === userAccountId)
+      .map(([subscriptionId]) => subscriptionId);
   },
   /**
    * Adds a subscription to the database

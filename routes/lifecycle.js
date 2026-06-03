@@ -54,9 +54,11 @@ router.post('/', async function (req, res) {
  * @param  {IConfidentialClientApplication} msalClient - The MSAL client to retrieve tokens for Graph requests
  */
 async function renewSubscription(subscription, msalClient) {
+  const isAppOnlySubscription = String(subscription.userAccountId || '').startsWith('APP-ONLY');
+
   // Get the Graph client
   const client =
-    subscription.userAccountId === 'APP-ONLY'
+    isAppOnlySubscription
       ? graph.getGraphClientForApp(msalClient)
       : graph.getGraphClientForUser(msalClient, subscription.userAccountId);
 
