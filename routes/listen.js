@@ -9,6 +9,7 @@ import graph from "../helpers/graphHelper.js";
 import certHelper from "../helpers/certHelper.js";
 import tokenHelper from "../helpers/tokenHelper.js";
 import dbHelper from "../helpers/dbHelper.js";
+import subscriptionStateHelper from "../helpers/subscriptionStateHelper.js";
 
 // POST /listen
 router.post('/', async function (req, res) {
@@ -47,7 +48,10 @@ router.post('/', async function (req, res) {
       const notification = req.body.value[i];
 
       // Verify the client state matches the expected value
-      if (notification.clientState == process.env.SUBSCRIPTION_CLIENT_STATE) {
+      if (subscriptionStateHelper.isExpectedClientState(
+        notification.clientState,
+        process.env.SUBSCRIPTION_CLIENT_STATE,
+      )) {
         // Verify we have a matching subscription record in the database
         const subscription = dbHelper.getSubscription(
           notification.subscriptionId

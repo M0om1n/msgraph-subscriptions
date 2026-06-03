@@ -14,34 +14,38 @@ block content
           div(class='card-body')
             div(class='d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3')
               h2(class='h4 mb-0') Active subscriptions
-              span(class='badge bg-secondary')= `${activeSubscriptions ? activeSubscriptions.length : 0} total`
+              span(class='badge bg-secondary')= `${graphSubscriptions ? graphSubscriptions.length : 0} total`
 
-            if activeSubscriptions && activeSubscriptions.length
-              div(class='row row-cols-1 row-cols-xl-2 g-3')
-                each subscription in activeSubscriptions
-                  div(class='col')
-                    div(class='card h-100 border')
-                      div(class='card-body')
-                        div(class='d-flex justify-content-between align-items-start gap-2 mb-2')
-                          span(class='badge bg-primary')= subscription.owner
-                          if subscription.hasError
-                            span(class='badge bg-danger') Unavailable
+            if graphSubscriptions && graphSubscriptions.length
+              div(class='table-responsive')
+                table(class='table table-sm table-hover align-middle mb-0')
+                  thead(class='table-light')
+                    tr
+                      th DB
+                      th User
+                      th Calendar
+                      th Owner
+                      th Change type
+                      th Resource
+                      th Expires
+                  tbody
+                    each sub in graphSubscriptions
+                      tr
+                        td
+                          if sub.inDb
+                            span(class='badge bg-success') ✓
                           else
-                            span(class='badge bg-success') Active
-
-                        p(class='mb-2 small text-muted')= `ID: ${subscription.id}`
-                        if subscription.hasError
-                          p(class='mb-0 text-danger small')= subscription.errorMessage
-                        else
-                          p(class='mb-2 small')
-                            strong Change type:
-                            |  #{subscription.changeType || 'n/a'}
-                          p(class='mb-2 small')
-                            strong Expires:
-                            |  #{subscription.expirationDateTime || 'n/a'}
-                          p(class='mb-0 small text-break')
-                            strong Resource:
-                            |  #{subscription.resource || 'n/a'}
+                            span(class='badge bg-warning text-dark') ✗
+                        td(class='small')= sub.userName || '—'
+                        td(class='small')= sub.calendarName || '—'
+                        td
+                          if sub.owner
+                            span(class='badge bg-primary')= sub.owner
+                          else
+                            span(class='text-muted small') —
+                        td(class='small')= sub.changeType || '—'
+                        td(class='small text-break')= sub.resource || '—'
+                        td(class='small text-nowrap')= sub.expirationDateTime ? new Date(sub.expirationDateTime).toLocaleString() : '—'
             else
               p(class='text-muted mb-0') No active app subscriptions were found.
 
@@ -70,53 +74,6 @@ block content
                       small(class='text-muted') Default calendar
             else
               p(class='text-muted mb-0 small') Select a user to view calendars.
-
-    div(class='card border-0 shadow-sm mt-4')
-      div(class='card-body')
-        h2(class='h5 mb-3') Graph API vs DB sync
-        div(class='row g-3')
-          div(class='col-md-4')
-            div(class='card border-success h-100')
-              div(class='card-header bg-success text-white d-flex justify-content-between align-items-center')
-                span Matched
-                span(class='badge bg-white text-success')= syncComparison.matched.length
-              ul(class='list-group list-group-flush')
-                if syncComparison.matched.length
-                  each item in syncComparison.matched
-                    li(class='list-group-item px-3 py-2')
-                      div(class='d-flex justify-content-between gap-2 mb-1')
-                        small(class='text-muted text-truncate')= item.id
-                        span(class='badge bg-primary flex-shrink-0')= item.owner
-                      small(class='text-break d-block')= item.resource
-                else
-                  li(class='list-group-item text-muted small') None
-          div(class='col-md-4')
-            div(class='card border-warning h-100')
-              div(class='card-header bg-warning d-flex justify-content-between align-items-center')
-                span Graph only
-                span(class='badge bg-white text-dark')= syncComparison.graphOnly.length
-              ul(class='list-group list-group-flush')
-                if syncComparison.graphOnly.length
-                  each item in syncComparison.graphOnly
-                    li(class='list-group-item px-3 py-2')
-                      small(class='text-muted text-truncate d-block')= item.id
-                      small(class='text-break d-block')= item.resource
-                else
-                  li(class='list-group-item text-muted small') None
-          div(class='col-md-4')
-            div(class='card border-danger h-100')
-              div(class='card-header bg-danger text-white d-flex justify-content-between align-items-center')
-                span DB only (stale)
-                span(class='badge bg-white text-danger')= syncComparison.dbOnly.length
-              ul(class='list-group list-group-flush')
-                if syncComparison.dbOnly.length
-                  each item in syncComparison.dbOnly
-                    li(class='list-group-item px-3 py-2')
-                      div(class='d-flex justify-content-between gap-2')
-                        small(class='text-muted text-truncate')= item.id
-                        span(class='badge bg-primary flex-shrink-0')= item.owner
-                else
-                  li(class='list-group-item text-muted small') None
 
     div(class='mt-4')
       a(class='btn btn-outline-secondary px-4', href='/') Back to home
