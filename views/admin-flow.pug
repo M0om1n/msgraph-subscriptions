@@ -29,8 +29,8 @@ block content
                   thead(class='table-light')
                     tr
                       th DB
-                      th User
-                      th Calendar
+                      th(class='admin-col-user') User
+                      th(class='admin-col-calendar') Calendar
                       th Events
                       th Fields
                       th Expires
@@ -43,8 +43,8 @@ block content
                             span(class='badge bg-success') ✓
                           else
                             span(class='badge bg-warning text-dark') ✗
-                        td(class='small')= sub.userName || '—'
-                        td(class='small')= sub.calendarName || '—'
+                        td(class='small admin-col-user')= sub.userName || '—'
+                        td(class='small admin-col-calendar')= sub.calendarName || '—'
                         td(class='small')= sub.changeType || '—'
                         td
                           if sub.fields && sub.fields.length
