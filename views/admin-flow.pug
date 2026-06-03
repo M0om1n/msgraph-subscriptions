@@ -8,6 +8,13 @@ block content
 
     p(class='lead mb-4') Monitor active subscriptions and inspect calendars by user.
 
+    if subscribedCount > 0
+      div(class='alert alert-success')= `Subscribed: ${subscribedCount}`
+    if unsubscribedCount > 0
+      div(class='alert alert-info')= `Unsubscribed: ${unsubscribedCount}`
+    if failedCount > 0
+      div(class='alert alert-warning')= `Failed: ${failedCount}`
+
     div(class='row g-4')
       div(class='col-lg-9')
         div(class='card border-0 shadow-sm h-100')
@@ -25,7 +32,7 @@ block content
                       th User
                       th Calendar
                       th Owner
-                      th Change type
+                      th Events
                       th Fields
                       th Expires
                       th Action
@@ -78,12 +85,18 @@ block content
 
             h3(class='h6 mb-2') Calendars
             if calendars && calendars.length
-              ul(class='list-group list-group-flush')
-                each calendar in calendars
-                  li(class='list-group-item px-0 py-2')
-                    div(class='fw-semibold')= calendar.name
-                    if calendar.isDefaultCalendar
-                      small(class='text-muted') Default calendar
+              form(method='post' action='/admin-flow/sync-subscriptions')
+                input(type='hidden' name='userId' value=selectedUserId)
+                div(class='list-group list-group-flush mb-3')
+                  each calendar, idx in calendars
+                    - const isChecked = selectedCalendarIds && selectedCalendarIds.includes(String(calendar.id).toLowerCase())
+                    label(class='list-group-item px-0 py-2 d-flex align-items-start gap-2' for=`admin-calendar-${idx}`)
+                      input(class='form-check-input mt-1' type='checkbox' id=`admin-calendar-${idx}` name='calendarIds' value=calendar.id checked=isChecked)
+                      span
+                        div(class='fw-semibold')= calendar.name
+                        if calendar.isDefaultCalendar
+                          small(class='text-muted d-block') Default calendar
+                button(class='btn btn-primary w-100' type='submit') Subscribe
             else
               p(class='text-muted mb-0 small') Select a user to view calendars.
 
