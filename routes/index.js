@@ -391,8 +391,6 @@ router.get('/admin-flow', async function (req, res) {
 
         if (
           selectedUserId &&
-          inDb &&
-          dbSubscriptionIds.get(sub.id) === 'APP-ONLY-USER-FLOW' &&
           resourceInfo &&
           resourceInfo.userId.toLowerCase() === selectedUserId.toLowerCase()
         ) {
@@ -497,33 +495,30 @@ router.post('/admin-flow/sync-subscriptions', async function (req, res) {
     console.log(`Unable to load admin sync metadata for user ${selectedUserId}: ${lookupError.message}`);
   }
 
-  const existingSubscriptionIds = dbHelper.getSubscriptionsByUserAccountId('APP-ONLY-USER-FLOW');
   const existingByCalendar = new Map();
+  try {
+    const graphSubsResponse = await client.api('/subscriptions').get();
+    if (graphSubsResponse && graphSubsResponse.value) {
+      for (const existingSubscription of graphSubsResponse.value) {
+        const resourceInfo = parseCalendarSubscriptionResource(existingSubscription.resource);
+        if (!resourceInfo) {
+          continue;
+        }
 
-  for (const subscriptionId of existingSubscriptionIds) {
-    try {
-      const existingSubscription = await client
-        .api(`/subscriptions/${subscriptionId}`)
-        .get();
+        if (resourceInfo.userId.toLowerCase() !== selectedUserId.toLowerCase()) {
+          continue;
+        }
 
-      const resourceInfo = parseCalendarSubscriptionResource(existingSubscription.resource);
-      if (!resourceInfo) {
-        continue;
+        const calendarKey = String(resourceInfo.calendarId || '').toLowerCase();
+        if (!existingByCalendar.has(calendarKey)) {
+          existingByCalendar.set(calendarKey, []);
+        }
+
+        existingByCalendar.get(calendarKey).push(existingSubscription.id);
       }
-
-      if (resourceInfo.userId.toLowerCase() !== selectedUserId.toLowerCase()) {
-        continue;
-      }
-
-      const calendarKey = String(resourceInfo.calendarId || '').toLowerCase();
-      if (!existingByCalendar.has(calendarKey)) {
-        existingByCalendar.set(calendarKey, []);
-      }
-
-      existingByCalendar.get(calendarKey).push(subscriptionId);
-    } catch (existingError) {
-      console.log(`Unable to load existing admin subscription ${subscriptionId}: ${existingError.message}`);
     }
+  } catch (existingError) {
+    console.log(`Unable to load existing admin subscriptions from Graph: ${existingError.message}`);
   }
 
   let subscribedCount = 0;
