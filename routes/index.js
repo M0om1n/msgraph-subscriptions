@@ -30,6 +30,34 @@ function parseSelectedFields(resource) {
     .filter((field) => field.length > 0);
 }
 
+function parseCalendarSubscriptionResource(resource) {
+  const rawResource = String(resource || '').trim().replace(/^\//, '');
+  if (!rawResource) {
+    return null;
+  }
+
+  const pathOnly = rawResource.split('?')[0];
+  const segments = pathOnly.split('/').filter((segment) => segment);
+
+  // Expected: users/{userId}/calendars/{calendarId}/events
+  if (segments.length < 5 || segments[0].toLowerCase() !== 'users') {
+    return null;
+  }
+
+  if (segments[2].toLowerCase() !== 'calendars') {
+    return null;
+  }
+
+  if (segments[4].toLowerCase() !== 'events') {
+    return null;
+  }
+
+  return {
+    userId: segments[1],
+    calendarId: segments[3],
+  };
+}
+
 // GET /
 router.get('/', async function (req, res, next) {
   const users = [];
@@ -286,7 +314,11 @@ router.get('/admin-flow', async function (req, res) {
   const users = [];
   const calendars = [];
   const graphSubscriptions = [];
+  const selectedCalendarIds = new Set();
   const selectedUserId = req.query.userId || process.env.USER_ID || '';
+  const subscribedCount = Number.parseInt(req.query.subscribed || '0', 10);
+  const unsubscribedCount = Number.parseInt(req.query.unsubscribed || '0', 10);
+  const failedCount = Number.parseInt(req.query.failed || '0', 10);
 
   try {
     const client = graph.getGraphClientForApp(req.app.locals.msalClient);
@@ -355,6 +387,17 @@ router.get('/admin-flow', async function (req, res) {
 
         const parsedState = subscriptionStateHelper.parseClientState(clientStateValue);
         const stateMetadata = parsedState.metadata || {};
+        const resourceInfo = parseCalendarSubscriptionResource(sub.resource);
+
+        if (
+          selectedUserId &&
+          inDb &&
+          dbSubscriptionIds.get(sub.id) === 'APP-ONLY-USER-FLOW' &&
+          resourceInfo &&
+          resourceInfo.userId.toLowerCase() === selectedUserId.toLowerCase()
+        ) {
+          selectedCalendarIds.add(String(resourceInfo.calendarId || '').toLowerCase());
+        }
 
         graphSubscriptions.push({
           id: sub.id,
@@ -385,8 +428,164 @@ router.get('/admin-flow', async function (req, res) {
     users,
     calendars,
     selectedUserId,
+    selectedCalendarIds: [...selectedCalendarIds],
     graphSubscriptions,
+    subscribedCount: Number.isNaN(subscribedCount) ? 0 : subscribedCount,
+    unsubscribedCount: Number.isNaN(unsubscribedCount) ? 0 : unsubscribedCount,
+    failedCount: Number.isNaN(failedCount) ? 0 : failedCount,
   });
+});
+
+router.post('/admin-flow/sync-subscriptions', async function (req, res) {
+  const selectedUserId = String(req.body.userId || '').trim();
+  const selectedCalendarIdsRaw = Array.isArray(req.body.calendarIds)
+    ? req.body.calendarIds
+    : req.body.calendarIds
+      ? [req.body.calendarIds]
+      : [];
+
+  if (!selectedUserId) {
+    res.redirect('/admin-flow');
+    return;
+  }
+
+  const selectedByLower = new Map();
+  for (const calendarId of selectedCalendarIdsRaw) {
+    const normalized = String(calendarId || '').trim();
+    if (!normalized) {
+      continue;
+    }
+
+    selectedByLower.set(normalized.toLowerCase(), normalized);
+  }
+
+  const selectedSet = new Set(selectedByLower.keys());
+
+  const client = graph.getGraphClientForApp(req.app.locals.msalClient);
+  const notificationHost = `https://${req.hostname}`;
+
+  let selectedUserName = selectedUserId;
+  const calendarNameById = new Map();
+
+  try {
+    const selectedUser = await client
+      .api(`/users/${selectedUserId}`)
+      .select('displayName,mail,userPrincipalName')
+      .get();
+
+    selectedUserName =
+      selectedUser.displayName ||
+      selectedUser.userPrincipalName ||
+      selectedUser.mail ||
+      selectedUserId;
+
+    const calendarsResponse = await client
+      .api(`/users/${selectedUserId}/calendars`)
+      .select('id,name')
+      .top(200)
+      .get();
+
+    if (calendarsResponse && calendarsResponse.value) {
+      for (const calendar of calendarsResponse.value) {
+        calendarNameById.set(
+          String(calendar.id || '').toLowerCase(),
+          calendar.name || calendar.id,
+        );
+      }
+    }
+  } catch (lookupError) {
+    console.log(`Unable to load admin sync metadata for user ${selectedUserId}: ${lookupError.message}`);
+  }
+
+  const existingSubscriptionIds = dbHelper.getSubscriptionsByUserAccountId('APP-ONLY-USER-FLOW');
+  const existingByCalendar = new Map();
+
+  for (const subscriptionId of existingSubscriptionIds) {
+    try {
+      const existingSubscription = await client
+        .api(`/subscriptions/${subscriptionId}`)
+        .get();
+
+      const resourceInfo = parseCalendarSubscriptionResource(existingSubscription.resource);
+      if (!resourceInfo) {
+        continue;
+      }
+
+      if (resourceInfo.userId.toLowerCase() !== selectedUserId.toLowerCase()) {
+        continue;
+      }
+
+      const calendarKey = String(resourceInfo.calendarId || '').toLowerCase();
+      if (!existingByCalendar.has(calendarKey)) {
+        existingByCalendar.set(calendarKey, []);
+      }
+
+      existingByCalendar.get(calendarKey).push(subscriptionId);
+    } catch (existingError) {
+      console.log(`Unable to load existing admin subscription ${subscriptionId}: ${existingError.message}`);
+    }
+  }
+
+  let subscribedCount = 0;
+  let unsubscribedCount = 0;
+  let failedCount = 0;
+
+  for (const [calendarKey, subscriptionIds] of existingByCalendar) {
+    if (selectedSet.has(calendarKey)) {
+      continue;
+    }
+
+    for (const subscriptionId of subscriptionIds) {
+      try {
+        await client.api(`/subscriptions/${subscriptionId}`).delete();
+      } catch (deleteError) {
+        console.log(`Unable to delete subscription ${subscriptionId}: ${deleteError.message}`);
+        failedCount += 1;
+      }
+
+      dbHelper.deleteSubscription(subscriptionId);
+      unsubscribedCount += 1;
+    }
+  }
+
+  for (const [calendarKey, calendarId] of selectedByLower) {
+    if (existingByCalendar.has(calendarKey)) {
+      continue;
+    }
+
+    try {
+      const calendarName = calendarNameById.get(calendarKey) || calendarId;
+      const subscription = await client.api('/subscriptions').create({
+        changeType: 'created',
+        notificationUrl: `${notificationHost}/listen`,
+        lifecycleNotificationUrl: `${notificationHost}/lifecycle`,
+        resource: `users/${selectedUserId}/calendars/${calendarId}/events?$select=id,subject,start,end,organizer,bodyPreview,attendees,location`,
+        clientState: subscriptionStateHelper.buildClientState(
+          process.env.SUBSCRIPTION_CLIENT_STATE,
+          {
+            userName: selectedUserName,
+            calendarName: calendarName,
+          },
+        ),
+        includeResourceData: true,
+        encryptionCertificate: certHelper.getSerializedCertificate(
+          process.env.CERTIFICATE_PATH,
+        ),
+        encryptionCertificateId: process.env.CERTIFICATE_ID,
+        expirationDateTime: new Date(Date.now() + 3600000).toISOString(),
+      });
+
+      dbHelper.addSubscription(subscription.id, 'APP-ONLY-USER-FLOW');
+      subscribedCount += 1;
+    } catch (createError) {
+      console.log(`Unable to create admin subscription for calendar ${calendarId}: ${createError.message}`);
+      failedCount += 1;
+    }
+  }
+
+  res.redirect(
+    `/admin-flow?userId=${encodeURIComponent(selectedUserId)}&subscribed=${subscribedCount}&unsubscribed=${unsubscribedCount}&failed=${failedCount}`,
+  );
 });
 
 router.post('/admin-flow/unsubscribe', async function (req, res) {
