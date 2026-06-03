@@ -6,8 +6,70 @@ block content
       h1(class='mb-0') Admin Flow
       span(class='badge bg-dark text-light px-3 py-2') Admin mode
 
-    p(class='lead mb-2') Manage admin-level flow actions from this page.
-    p(class='text-muted mb-4') This page is ready for admin-specific workflow controls.
+    p(class='lead mb-4') Monitor active subscriptions and inspect calendars by user.
 
-    div(class='d-flex flex-wrap gap-2')
+    div(class='row g-4')
+      div(class='col-lg-9')
+        div(class='card border-0 shadow-sm h-100')
+          div(class='card-body')
+            div(class='d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3')
+              h2(class='h4 mb-0') Active subscriptions
+              span(class='badge bg-secondary')= `${activeSubscriptions ? activeSubscriptions.length : 0} total`
+
+            if activeSubscriptions && activeSubscriptions.length
+              div(class='row row-cols-1 row-cols-xl-2 g-3')
+                each subscription in activeSubscriptions
+                  div(class='col')
+                    div(class='card h-100 border')
+                      div(class='card-body')
+                        div(class='d-flex justify-content-between align-items-start gap-2 mb-2')
+                          span(class='badge bg-primary')= subscription.owner
+                          if subscription.hasError
+                            span(class='badge bg-danger') Unavailable
+                          else
+                            span(class='badge bg-success') Active
+
+                        p(class='mb-2 small text-muted')= `ID: ${subscription.id}`
+                        if subscription.hasError
+                          p(class='mb-0 text-danger small')= subscription.errorMessage
+                        else
+                          p(class='mb-2 small')
+                            strong Change type:
+                            |  #{subscription.changeType || 'n/a'}
+                          p(class='mb-2 small')
+                            strong Expires:
+                            |  #{subscription.expirationDateTime || 'n/a'}
+                          p(class='mb-0 small text-break')
+                            strong Resource:
+                            |  #{subscription.resource || 'n/a'}
+            else
+              p(class='text-muted mb-0') No active app subscriptions were found.
+
+      div(class='col-lg-3')
+        div(class='card border-0 shadow-sm')
+          div(class='card-body')
+            h2(class='h5') Select user
+            form(method='get' action='/admin-flow')
+              div(class='mb-3')
+                label(class='form-label' for='userId') User
+                select(class='form-select' id='userId' name='userId')
+                  option(value='') Select a user
+                  each user in users
+                    option(value=user.id selected=selectedUserId === user.id)= `${user.name}${user.email ? ` (${user.email})` : ''}`
+              button(class='btn btn-primary w-100' type='submit') Load calendars
+
+            hr
+
+            h3(class='h6 mb-2') Calendars
+            if calendars && calendars.length
+              ul(class='list-group list-group-flush')
+                each calendar in calendars
+                  li(class='list-group-item px-0 py-2')
+                    div(class='fw-semibold')= calendar.name
+                    if calendar.isDefaultCalendar
+                      small(class='text-muted') Default calendar
+            else
+              p(class='text-muted mb-0 small') Select a user to view calendars.
+
+    div(class='mt-4')
       a(class='btn btn-outline-secondary px-4', href='/') Back to home
