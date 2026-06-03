@@ -73,6 +73,7 @@ router.get('/user-flow', async function (req, res) {
   const selectedUserId = process.env.USER_ID || '';
   let selectedUserName = selectedUserId;
   const calendars = [];
+  const subscribedCalendarIds = new Set();
   const subscribedCount = Number.parseInt(req.query.subscribed || '0', 10);
   const failedCount = Number.parseInt(req.query.failed || '0', 10);
 
@@ -105,6 +106,27 @@ router.get('/user-flow', async function (req, res) {
           });
         }
       }
+
+      const existingSubscriptions = dbHelper.getSubscriptionsByUserAccountId('APP-ONLY-USER-FLOW');
+      for (const subscriptionId of existingSubscriptions) {
+        try {
+          const existingSubscription = await client
+            .api(`/subscriptions/${subscriptionId}`)
+            .get();
+          const resource = String(existingSubscription.resource || '').toLowerCase();
+          const marker = `/users/${selectedUserId.toLowerCase()}/calendars/`;
+
+          if (resource.includes(marker)) {
+            const afterMarker = resource.split(marker)[1] || '';
+            const calendarId = afterMarker.split('/events')[0] || '';
+            if (calendarId) {
+              subscribedCalendarIds.add(calendarId.toLowerCase());
+            }
+          }
+        } catch (subError) {
+          console.log(`Unable to load subscription ${subscriptionId}: ${subError.message}`);
+        }
+      }
     } catch (error) {
       console.log(`Unable to load calendars for user flow: ${error.message}`);
     }
@@ -115,6 +137,7 @@ router.get('/user-flow', async function (req, res) {
     selectedUserId,
     selectedUserName,
     calendars,
+    subscribedCalendarIds: [...subscribedCalendarIds],
     subscribedCount: Number.isNaN(subscribedCount) ? 0 : subscribedCount,
     failedCount: Number.isNaN(failedCount) ? 0 : failedCount,
   });
