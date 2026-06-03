@@ -26,23 +26,15 @@ block content
             if graphSubscriptions && graphSubscriptions.length
               div(class='table-responsive')
                 table(class='table table-sm table-hover align-middle mb-0 admin-subscriptions-table')
-                  colgroup
-                    col(class='col-db')
-                    col(class='col-user')
-                    col(class='col-calendar')
-                    col(class='col-events')
-                    col(class='col-fields')
-                    col(class='col-expires')
-                    col(class='col-action')
                   thead(class='table-light')
                     tr
                       th DB
-                      th User
-                      th Calendar
-                      th Events
-                      th Fields
-                      th Expires
-                      th Action
+                      th(class='admin-col-user') User
+                      th(class='admin-col-calendar') Calendar
+                      th(class='admin-col-events') Events
+                      th(class='admin-col-fields') Fields
+                      th(class='admin-col-expires') Expires
+                      th(class='admin-col-action') Action
                   tbody
                     each sub in graphSubscriptions
                       tr
@@ -53,16 +45,16 @@ block content
                             span(class='badge bg-warning text-dark') ✗
                         td(class='small admin-cell-user')= sub.userName || '—'
                         td(class='small admin-cell-calendar')= sub.calendarName || '—'
-                        td(class='small')= sub.changeType || '—'
-                        td
+                        td(class='small admin-cell-events')= sub.changeType || '—'
+                        td(class='admin-cell-fields')
                           if sub.fields && sub.fields.length
                             div(class='d-flex flex-wrap gap-1 admin-field-badges')
                               each fieldName in sub.fields
                                 span(class='badge bg-light text-dark border')= fieldName
                           else
                             span(class='text-muted small') Default event fields
-                        td(class='small text-nowrap')= sub.expirationDateTime ? new Date(sub.expirationDateTime).toLocaleString() : '—'
-                        td
+                        td(class='small admin-cell-expires')= sub.expirationDateTime ? new Date(sub.expirationDateTime).toLocaleString() : '—'
+                        td(class='admin-cell-action')
                           form(method='post' action='/admin-flow/unsubscribe' class='m-0')
                             input(type='hidden' name='subscriptionId' value=sub.id)
                             input(type='hidden' name='userId' value=selectedUserId)
