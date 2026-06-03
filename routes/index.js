@@ -71,6 +71,7 @@ router.get('/', async function (req, res, next) {
 
 router.get('/user-flow', async function (req, res) {
   const selectedUserId = process.env.USER_ID || '';
+  let selectedUserName = selectedUserId;
   const calendars = [];
   const subscribedCount = Number.parseInt(req.query.subscribed || '0', 10);
   const failedCount = Number.parseInt(req.query.failed || '0', 10);
@@ -78,6 +79,17 @@ router.get('/user-flow', async function (req, res) {
   if (selectedUserId) {
     try {
       const client = graph.getGraphClientForApp(req.app.locals.msalClient);
+      const selectedUser = await client
+        .api(`/users/${selectedUserId}`)
+        .select('displayName,mail,userPrincipalName')
+        .get();
+
+      selectedUserName =
+        selectedUser.displayName ||
+        selectedUser.userPrincipalName ||
+        selectedUser.mail ||
+        selectedUserId;
+
       const calendarsResponse = await client
         .api(`/users/${selectedUserId}/calendars`)
         .select('id,name,isDefaultCalendar')
@@ -101,6 +113,7 @@ router.get('/user-flow', async function (req, res) {
   res.render('user-flow', {
     title: 'User Flow',
     selectedUserId,
+    selectedUserName,
     calendars,
     subscribedCount: Number.isNaN(subscribedCount) ? 0 : subscribedCount,
     failedCount: Number.isNaN(failedCount) ? 0 : failedCount,

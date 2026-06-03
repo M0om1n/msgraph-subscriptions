@@ -12,3 +12,7 @@
 .expandable-cell-toggle {
   text-decoration: none;
 }
+
+.user-flow-shell {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}

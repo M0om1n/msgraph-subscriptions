@@ -1,23 +1,37 @@
 extends layout
 
 block content
-  div(class='p-5 mb-4 bg-light border rounded-3')
-    h1 User Flow
+  div(class='user-flow-shell p-4 p-md-5 mb-4 border rounded-3')
+    div(class='d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3')
+      h1(class='mb-0') User Flow
+      span(class='badge bg-dark text-light px-3 py-2') App-only mode
+
     if subscribedCount > 0
       div(class='alert alert-success')= `Created ${subscribedCount} subscription(s).`
     if failedCount > 0
       div(class='alert alert-warning')= `Failed to create ${failedCount} subscription(s).`
+
     if selectedUserId
-      p(class='lead mb-4')= `Calendars for USER_ID: ${selectedUserId}`
+      p(class='lead mb-2') Select one or more calendars and create subscriptions.
+      p(class='mb-1 fw-semibold')= `Calendars for: ${selectedUserName || selectedUserId}`
+      p(class='text-muted mb-4')= `USER_ID: ${selectedUserId}`
       if calendars && calendars.length
         form(method='post' action='/user-flow/subscribe')
-          each calendar in calendars
-            div(class='form-check mb-2')
-              input(class='form-check-input' type='checkbox' id=`calendar-${calendar.id}` name='calendarIds' value=calendar.id)
-              label(class='form-check-label' for=`calendar-${calendar.id}`)= `${calendar.name}${calendar.isDefaultCalendar ? ' (default)' : ''}`
-          button(class='btn btn-primary mt-3' type='submit') Subscribe
+          div(class='list-group shadow-sm')
+            each calendar, idx in calendars
+              label(class='list-group-item d-flex gap-3 py-3 align-items-start' for=`calendar-${idx}`)
+                input(class='form-check-input mt-1' type='checkbox' id=`calendar-${idx}` name='calendarIds' value=calendar.id)
+                span
+                  span(class='d-block fw-semibold')= calendar.name
+                  if calendar.isDefaultCalendar
+                    small(class='text-muted') Default calendar
+
+          div(class='d-flex flex-wrap gap-2 mt-4')
+            button(class='btn btn-primary px-4' type='submit') Subscribe
+            a(class='btn btn-outline-secondary px-4', href='/') Back to home
       else
         p(class='text-muted mb-4') No calendars were found for USER_ID.
+        a(class='btn btn-outline-secondary', href='/') Back to home
     else
       p(class='text-muted mb-4') USER_ID is not configured.
-    a(class='btn btn-outline-secondary', href='/') Back to home
+      a(class='btn btn-outline-secondary', href='/') Back to home
