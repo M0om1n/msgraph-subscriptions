@@ -67,4 +67,16 @@ router.get('/', async function (req, res, next) {
   });
 });
 
+router.get('/user-flow', function (req, res) {
+  res.render('user-flow', {
+    title: 'User Flow',
+  });
+});
+
+router.get('/admin-flow', function (req, res) {
+  res.render('admin-flow', {
+    title: 'Admin Flow',
+  });
+});
+
 export default router;
