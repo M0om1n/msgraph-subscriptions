@@ -31,7 +31,6 @@ block content
                       th DB
                       th User
                       th Calendar
-                      th Owner
                       th Events
                       th Fields
                       th Expires
@@ -46,11 +45,6 @@ block content
                             span(class='badge bg-warning text-dark') ✗
                         td(class='small')= sub.userName || '—'
                         td(class='small')= sub.calendarName || '—'
-                        td
-                          if sub.owner
-                            span(class='badge bg-primary')= sub.owner
-                          else
-                            span(class='text-muted small') —
                         td(class='small')= sub.changeType || '—'
                         td
                           if sub.fields && sub.fields.length
