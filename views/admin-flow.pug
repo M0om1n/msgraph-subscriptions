@@ -26,8 +26,9 @@ block content
                       th Calendar
                       th Owner
                       th Change type
-                      th Resource
+                      th Fields
                       th Expires
+                      th Action
                   tbody
                     each sub in graphSubscriptions
                       tr
@@ -44,8 +45,19 @@ block content
                           else
                             span(class='text-muted small') —
                         td(class='small')= sub.changeType || '—'
-                        td(class='small text-break')= sub.resource || '—'
+                        td
+                          if sub.fields && sub.fields.length
+                            div(class='d-flex flex-wrap gap-1')
+                              each fieldName in sub.fields
+                                span(class='badge bg-light text-dark border')= fieldName
+                          else
+                            span(class='text-muted small') Default event fields
                         td(class='small text-nowrap')= sub.expirationDateTime ? new Date(sub.expirationDateTime).toLocaleString() : '—'
+                        td
+                          form(method='post' action='/admin-flow/unsubscribe' class='m-0')
+                            input(type='hidden' name='subscriptionId' value=sub.id)
+                            input(type='hidden' name='userId' value=selectedUserId)
+                            button(class='btn btn-sm btn-outline-danger' type='submit') Unsubscribe
             else
               p(class='text-muted mb-0') No active app subscriptions were found.
 

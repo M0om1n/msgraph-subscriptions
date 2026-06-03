@@ -6,6 +6,30 @@ import subscriptionStateHelper from "../helpers/subscriptionStateHelper.js";
 
 const router = express.Router();
 
+function parseSelectedFields(resource) {
+  const rawResource = String(resource || '');
+  if (!rawResource) {
+    return [];
+  }
+
+  const queryIndex = rawResource.indexOf('?');
+  if (queryIndex < 0 || queryIndex === rawResource.length - 1) {
+    return [];
+  }
+
+  const queryString = rawResource.slice(queryIndex + 1);
+  const params = new URLSearchParams(queryString);
+  const rawSelect = params.get('$select') || params.get('%24select');
+  if (!rawSelect) {
+    return [];
+  }
+
+  return rawSelect
+    .split(',')
+    .map((field) => field.trim())
+    .filter((field) => field.length > 0);
+}
+
 // GET /
 router.get('/', async function (req, res, next) {
   const users = [];
@@ -321,7 +345,7 @@ router.get('/admin-flow', async function (req, res) {
         graphSubscriptions.push({
           id: sub.id,
           changeType: sub.changeType || '',
-          resource: sub.resource || '',
+          fields: parseSelectedFields(sub.resource),
           expirationDateTime: sub.expirationDateTime || '',
           notificationUrl: sub.notificationUrl || '',
           owner: inDb ? dbSubscriptionIds.get(sub.id) : '',
@@ -349,6 +373,28 @@ router.get('/admin-flow', async function (req, res) {
     selectedUserId,
     graphSubscriptions,
   });
+});
+
+router.post('/admin-flow/unsubscribe', async function (req, res) {
+  const subscriptionId = String(req.body.subscriptionId || '').trim();
+  const selectedUserId = String(req.body.userId || '').trim();
+
+  if (!subscriptionId) {
+    res.redirect(selectedUserId ? `/admin-flow?userId=${encodeURIComponent(selectedUserId)}` : '/admin-flow');
+    return;
+  }
+
+  try {
+    const client = graph.getGraphClientForApp(req.app.locals.msalClient);
+    await client.api(`/subscriptions/${subscriptionId}`).delete();
+  } catch (error) {
+    console.log(`Unable to delete subscription ${subscriptionId} from Graph: ${error.message}`);
+  }
+
+  // Always remove local record to avoid stale IDs in memory.
+  dbHelper.deleteSubscription(subscriptionId);
+
+  res.redirect(selectedUserId ? `/admin-flow?userId=${encodeURIComponent(selectedUserId)}` : '/admin-flow');
 });
 
 export default router;
