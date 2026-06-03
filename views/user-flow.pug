@@ -3,5 +3,21 @@ extends layout
 block content
   div(class='p-5 mb-4 bg-light border rounded-3')
     h1 User Flow
-    p(class='lead mb-4') This page represents the user flow.
+    if subscribedCount > 0
+      div(class='alert alert-success')= `Created ${subscribedCount} subscription(s).`
+    if failedCount > 0
+      div(class='alert alert-warning')= `Failed to create ${failedCount} subscription(s).`
+    if selectedUserId
+      p(class='lead mb-4')= `Calendars for USER_ID: ${selectedUserId}`
+      if calendars && calendars.length
+        form(method='post' action='/user-flow/subscribe')
+          each calendar in calendars
+            div(class='form-check mb-2')
+              input(class='form-check-input' type='checkbox' id=`calendar-${calendar.id}` name='calendarIds' value=calendar.id)
+              label(class='form-check-label' for=`calendar-${calendar.id}`)= `${calendar.name}${calendar.isDefaultCalendar ? ' (default)' : ''}`
+          button(class='btn btn-primary mt-3' type='submit') Subscribe
+      else
+        p(class='text-muted mb-4') No calendars were found for USER_ID.
+    else
+      p(class='text-muted mb-4') USER_ID is not configured.
     a(class='btn btn-outline-secondary', href='/') Back to home
