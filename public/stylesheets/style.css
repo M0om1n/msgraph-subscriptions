@@ -16,3 +16,11 @@
 .user-flow-shell {
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 }
+
+.admin-col-user {
+  min-width: 170px;
+}
+
+.admin-col-calendar {
+  min-width: 190px;
+}
