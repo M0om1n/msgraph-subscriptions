@@ -25,12 +25,20 @@ block content
 
             if graphSubscriptions && graphSubscriptions.length
               div(class='table-responsive')
-                table(class='table table-sm table-hover align-middle mb-0')
+                table(class='table table-sm table-hover align-middle mb-0 admin-subscriptions-table')
+                  colgroup
+                    col(class='col-db')
+                    col(class='col-user')
+                    col(class='col-calendar')
+                    col(class='col-events')
+                    col(class='col-fields')
+                    col(class='col-expires')
+                    col(class='col-action')
                   thead(class='table-light')
                     tr
                       th DB
-                      th(class='admin-col-user') User
-                      th(class='admin-col-calendar') Calendar
+                      th User
+                      th Calendar
                       th Events
                       th Fields
                       th Expires
@@ -43,12 +51,12 @@ block content
                             span(class='badge bg-success') ✓
                           else
                             span(class='badge bg-warning text-dark') ✗
-                        td(class='small admin-col-user')= sub.userName || '—'
-                        td(class='small admin-col-calendar')= sub.calendarName || '—'
+                        td(class='small admin-cell-user')= sub.userName || '—'
+                        td(class='small admin-cell-calendar')= sub.calendarName || '—'
                         td(class='small')= sub.changeType || '—'
                         td
                           if sub.fields && sub.fields.length
-                            div(class='d-flex flex-wrap gap-1')
+                            div(class='d-flex flex-wrap gap-1 admin-field-badges')
                               each fieldName in sub.fields
                                 span(class='badge bg-light text-dark border')= fieldName
                           else
