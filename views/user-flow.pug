@@ -19,12 +19,16 @@ block content
         form(method='post' action='/user-flow/subscribe')
           div(class='list-group shadow-sm')
             each calendar, idx in calendars
+              - const isSubscribed = subscribedCalendarIds && subscribedCalendarIds.includes(String(calendar.id).toLowerCase())
               label(class='list-group-item d-flex gap-3 py-3 align-items-start' for=`calendar-${idx}`)
-                input(class='form-check-input mt-1' type='checkbox' id=`calendar-${idx}` name='calendarIds' value=calendar.id)
+                input(class='form-check-input mt-1' type='checkbox' id=`calendar-${idx}` name='calendarIds' value=calendar.id checked=isSubscribed)
                 span
-                  span(class='d-block fw-semibold')= calendar.name
+                  span(class='d-block fw-semibold')
+                    = calendar.name
+                    if isSubscribed
+                      span(class='badge bg-success ms-2') Subscribed
                   if calendar.isDefaultCalendar
-                    small(class='text-muted') Default calendar
+                    small(class='text-muted d-block') Default calendar
 
           div(class='d-flex flex-wrap gap-2 mt-4')
             button(class='btn btn-primary px-4' type='submit') Subscribe
