@@ -71,5 +71,52 @@ block content
             else
               p(class='text-muted mb-0 small') Select a user to view calendars.
 
+    div(class='card border-0 shadow-sm mt-4')
+      div(class='card-body')
+        h2(class='h5 mb-3') Graph API vs DB sync
+        div(class='row g-3')
+          div(class='col-md-4')
+            div(class='card border-success h-100')
+              div(class='card-header bg-success text-white d-flex justify-content-between align-items-center')
+                span Matched
+                span(class='badge bg-white text-success')= syncComparison.matched.length
+              ul(class='list-group list-group-flush')
+                if syncComparison.matched.length
+                  each item in syncComparison.matched
+                    li(class='list-group-item px-3 py-2')
+                      div(class='d-flex justify-content-between gap-2 mb-1')
+                        small(class='text-muted text-truncate')= item.id
+                        span(class='badge bg-primary flex-shrink-0')= item.owner
+                      small(class='text-break d-block')= item.resource
+                else
+                  li(class='list-group-item text-muted small') None
+          div(class='col-md-4')
+            div(class='card border-warning h-100')
+              div(class='card-header bg-warning d-flex justify-content-between align-items-center')
+                span Graph only
+                span(class='badge bg-white text-dark')= syncComparison.graphOnly.length
+              ul(class='list-group list-group-flush')
+                if syncComparison.graphOnly.length
+                  each item in syncComparison.graphOnly
+                    li(class='list-group-item px-3 py-2')
+                      small(class='text-muted text-truncate d-block')= item.id
+                      small(class='text-break d-block')= item.resource
+                else
+                  li(class='list-group-item text-muted small') None
+          div(class='col-md-4')
+            div(class='card border-danger h-100')
+              div(class='card-header bg-danger text-white d-flex justify-content-between align-items-center')
+                span DB only (stale)
+                span(class='badge bg-white text-danger')= syncComparison.dbOnly.length
+              ul(class='list-group list-group-flush')
+                if syncComparison.dbOnly.length
+                  each item in syncComparison.dbOnly
+                    li(class='list-group-item px-3 py-2')
+                      div(class='d-flex justify-content-between gap-2')
+                        small(class='text-muted text-truncate')= item.id
+                        span(class='badge bg-primary flex-shrink-0')= item.owner
+                else
+                  li(class='list-group-item text-muted small') None
+
     div(class='mt-4')
       a(class='btn btn-outline-secondary px-4', href='/') Back to home

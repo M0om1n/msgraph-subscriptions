@@ -257,7 +257,48 @@ router.get('/admin-flow', async function (req, res) {
       }
     }
 
+    // Fetch ALL subscriptions from Graph and DB in parallel
+    const [graphSubsResponse] = await Promise.all([
+      client.api('/subscriptions').get(),
+    ]);
+
+    const graphSubscriptionMap = new Map();
+    if (graphSubsResponse && graphSubsResponse.value) {
+      for (const sub of graphSubsResponse.value) {
+        graphSubscriptionMap.set(sub.id, sub);
+      }
+    }
+
+    // Collect every ID the DB knows about
     const subscriptionOwners = ['APP-ONLY', 'APP-ONLY-USER-FLOW'];
+    const dbSubscriptionIds = new Map(); // id -> owner
+    for (const owner of subscriptionOwners) {
+      for (const id of dbHelper.getSubscriptionsByUserAccountId(owner)) {
+        dbSubscriptionIds.set(id, owner);
+      }
+    }
+
+    // Compute diff categories
+    const syncComparison = {
+      matched: [],
+      graphOnly: [],
+      dbOnly: [],
+    };
+
+    for (const [id, sub] of graphSubscriptionMap) {
+      if (dbSubscriptionIds.has(id)) {
+        syncComparison.matched.push({ id, resource: sub.resource || '', expirationDateTime: sub.expirationDateTime || '', owner: dbSubscriptionIds.get(id) });
+      } else {
+        syncComparison.graphOnly.push({ id, resource: sub.resource || '', expirationDateTime: sub.expirationDateTime || '' });
+      }
+    }
+
+    for (const [id, owner] of dbSubscriptionIds) {
+      if (!graphSubscriptionMap.has(id)) {
+        syncComparison.dbOnly.push({ id, owner });
+      }
+    }
+
     const seenSubscriptionIds = new Set();
 
     for (const owner of subscriptionOwners) {
@@ -323,6 +364,7 @@ router.get('/admin-flow', async function (req, res) {
     calendars,
     selectedUserId,
     activeSubscriptions,
+    syncComparison: syncComparison || { matched: [], graphOnly: [], dbOnly: [] },
   });
 });
 
