@@ -23,11 +23,11 @@
 }
 
 .admin-col-user {
-  width: 16%;
+  width: 12%;
 }
 
 .admin-col-calendar {
-  width: 18%;
+  width: 14%;
 }
 
 .admin-col-events,
@@ -37,7 +37,7 @@
 }
 
 .admin-col-fields {
-  width: 25%;
+  width: 36%;
 }
 
 .admin-col-expires,
@@ -55,6 +55,18 @@
 .admin-cell-user,
 .admin-cell-calendar {
   overflow-wrap: anywhere;
+}
+
+.admin-cell-user {
+  max-width: 150px;
+}
+
+.admin-cell-calendar {
+  max-width: 190px;
+}
+
+.admin-cell-fields {
+  min-width: 320px;
 }
 
 .admin-cell-action .btn {
