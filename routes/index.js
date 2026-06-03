@@ -346,7 +346,6 @@ router.get('/admin-flow', async function (req, res) {
           try {
             const details = await client
               .api(`/subscriptions/${sub.id}`)
-              .select('clientState')
               .get();
             clientStateValue = details ? details.clientState : '';
           } catch (detailsError) {
