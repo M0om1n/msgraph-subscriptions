@@ -672,10 +672,11 @@ router.post('/admin-flow/unsubscribe', async function (req, res) {
 router.get('/grant-admin-consent', function (req, res) {
   const tenantId = process.env.OAUTH_TENANT_ID;
   const clientId = process.env.OAUTH_CLIENT_ID;
+  const redirectUri = process.env.OAUTH_REDIRECT_URI;
   if (!tenantId || !clientId) {
     return res.status(500).send('OAUTH_TENANT_ID and OAUTH_CLIENT_ID must be configured.');
   }
-  const consentUrl = `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/adminconsent?client_id=${encodeURIComponent(clientId)}`;
+  const consentUrl = `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/adminconsent?client_id=${encodeURIComponent(clientId)}${redirectUri ? `&redirect_uri=${encodeURIComponent(redirectUri)}` : ''}&state=admin_consent`;
   res.redirect(consentUrl);
 });
 
