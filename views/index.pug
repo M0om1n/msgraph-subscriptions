@@ -7,37 +7,4 @@ block content
     div(class='d-flex gap-2 flex-wrap mt-3')
       a(class='btn btn-primary', href='/user-flow') User flow
       a(class='btn btn-success', href='/admin-flow') Admin flow
-  div(class='row align-items-md-stretch')
-    div(class='col-md-6')
-      div(class='h-100 p-5 bg-light border rounded-3')
-        h2 Delegated authentication
-        p Choose this option to sign in as a user and receive notifications when new calendar events are created for that user
-        a(class='btn btn-outline-secondary', href='/delegated/signin') Sign in and subscribe
-    div(class='col-md-6')
-      div(class='h-100 p-5 bg-light border rounded-3')
-        h2 App-only authentication
-        p Choose a user, optionally load their calendars, then subscribe to one calendar
-        if users && users.length
-          form(method='get' action='/')
-            div(class='mb-3')
-              label(class='form-label' for='userId') User
-              select(class='form-select' id='userId' name='userId')
-                each optionUser in users
-                  option(value=optionUser.id selected=selectedUserId === optionUser.id)= `${optionUser.name}${optionUser.email ? ` (${optionUser.email})` : ''}`
-            button(class='btn btn-outline-secondary' type='submit') Load calendars
-
-          form(method='get' action='/apponly/subscribe' class='mt-3')
-            input(type='hidden' name='userId' value=selectedUserId)
-            div(class='mb-3')
-              label(class='form-label' for='calendarId') Calendar
-              if calendars && calendars.length
-                select(class='form-select' id='calendarId' name='calendarId')
-                  option(value='') Primary calendar (default)
-                  each calendar in calendars
-                    option(value=calendar.id selected=selectedCalendarId === calendar.id)= `${calendar.name}${calendar.isDefaultCalendar ? ' (default)' : ''}`
-              else
-                p(class='text-muted mb-0') No calendars loaded. Click "Load calendars" first, or subscribe to the primary calendar.
-            button(class='btn btn-outline-secondary' type='submit' disabled=!selectedUserId) Subscribe
-        else
-          p(class='text-muted mb-3') No users were loaded. The app will use the configured USER_ID.
-          a(class='btn btn-outline-secondary', href='/apponly/subscribe') Subscribe
+      a(class='btn btn-warning', href='/subscribe') Subscribe Test
