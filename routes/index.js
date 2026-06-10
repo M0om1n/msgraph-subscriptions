@@ -668,4 +668,15 @@ router.post('/admin-flow/unsubscribe', async function (req, res) {
   res.redirect(selectedUserId ? `/admin-flow?userId=${encodeURIComponent(selectedUserId)}` : '/admin-flow');
 });
 
+// GET /grant-admin-consent
+router.get('/grant-admin-consent', function (req, res) {
+  const tenantId = process.env.OAUTH_TENANT_ID;
+  const clientId = process.env.OAUTH_CLIENT_ID;
+  if (!tenantId || !clientId) {
+    return res.status(500).send('OAUTH_TENANT_ID and OAUTH_CLIENT_ID must be configured.');
+  }
+  const consentUrl = `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/adminconsent?client_id=${encodeURIComponent(clientId)}`;
+  res.redirect(consentUrl);
+});
+
 export default router;
