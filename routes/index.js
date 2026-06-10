@@ -115,6 +115,7 @@ router.get('/', async function (req, res, next) {
 
   res.render('index', {
     title: 'Microsoft Graph Notifications Sample',
+    showGrantAdminConsent: true,
     users,
     calendars,
     selectedUserId,

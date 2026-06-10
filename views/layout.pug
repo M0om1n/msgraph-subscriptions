@@ -15,7 +15,8 @@ html
           div(class='d-flex align-items-center text-dark')
             img(class='me-2' src='/images/g-raph.png')
             span(class='fs-4 flex-grow-1') Microsoft Graph Notifications Sample
-            a(class='btn btn-outline-primary ms-auto' href='/grant-admin-consent') Grant Admin Consent
+            if showGrantAdminConsent
+              a(class='btn btn-outline-primary ms-auto' href='/grant-admin-consent') Grant Admin Consent
         each error in errors
           div(class='alert alert-danger' role='alert')
             p(class='mb-3')= error.message
