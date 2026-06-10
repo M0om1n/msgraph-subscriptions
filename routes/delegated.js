@@ -24,6 +24,31 @@ router.get('/signin', async function (req, res) {
 
 // GET /delegated/callback
 router.get('/callback', async function (req, res) {
+  const isAdminConsentCallback =
+    String(req.query.state || '') === 'admin_consent' ||
+    String(req.query.admin_consent || '').toLowerCase() === 'true';
+
+  // Admin consent callbacks do not include an auth code.
+  if (!req.query.code) {
+    if (isAdminConsentCallback) {
+      if (req.query.error) {
+        req.flash('error_msg', {
+          message: 'Admin consent was not granted',
+          debug: `${req.query.error}: ${req.query.error_description || 'Unknown error'}`,
+        });
+      }
+
+      return res.redirect('/admin-flow');
+    }
+
+    req.flash('error_msg', {
+      message: 'Sign-in did not return an authorization code',
+      debug: 'Missing query parameter: code',
+    });
+
+    return res.redirect('/');
+  }
+
   // Microsoft identity platform redirects the browser here with the
   // authorization result
   const tokenRequest = {
